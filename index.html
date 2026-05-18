@@ -3597,6 +3597,22 @@ function stripDbImages(src) {
   return {...src, convs, diaryChats};
 }
 
+// ── Trim db to fit under Firestore 1MB limit ──
+function trimDbForSync(stripped) {
+  const MAX = 900000; // 900KB safe limit
+  let out = {...stripped};
+  // Sort convs oldest-first so we trim from the back (oldest)
+  let convs = [...(out.convs||[])].sort((a,b) => (a.ts||0)-(b.ts||0));
+  while (JSON.stringify({...out, convs}).length > MAX && convs.length > 1) {
+    convs.shift(); // drop oldest conv
+  }
+  // If still too large, trim messages within each conv
+  if (JSON.stringify({...out, convs}).length > MAX) {
+    convs = convs.map(c => ({...c, msgs: (c.msgs||[]).slice(-20)}));
+  }
+  return {...out, convs};
+}
+
 // ── Option B: pull → merge → push ──
 function syncPush() {
   if (!fbUser) return;
@@ -3611,9 +3627,10 @@ function syncPush() {
       const merged = mergeDb(db, cloudDb);
       db = merged;
 
+      const payload = trimDbForSync(stripDbImages(merged));
       _lastPushTime = Date.now();
       await fbStore.collection('users').doc(fbUser.uid).set({
-        db:         JSON.stringify(stripDbImages(merged)),
+        db:         JSON.stringify(payload),
         cfg:        JSON.stringify(getCfgToSync()),
         updatedAt:  firebase.firestore.FieldValue.serverTimestamp()
       });
