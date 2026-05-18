@@ -3609,21 +3609,27 @@ function stripDbImages(src) {
   return {...src, convs, diaryChats};
 }
 
+// ── Byte-accurate size check (Firestore counts UTF-8 bytes, not chars) ──
+function byteLen(str) { return new TextEncoder().encode(str).length; }
+
 // ── Trim db to fit under Firestore 1MB limit ──
 function trimDbForSync(stripped) {
-  const MAX = 900000; // 900KB safe limit
+  const MAX = 900000; // 900KB safe limit (bytes)
   let out = {...stripped};
-  // Sort convs oldest-first so we trim from the back (oldest)
+  // Sort convs oldest-first so we trim oldest first
   let convs = [...(out.convs||[])].sort((a,b) => (a.ts||0)-(b.ts||0));
-  while (JSON.stringify({...out, convs}).length > MAX && convs.length > 1) {
-    convs.shift(); // drop oldest conv
+  while (byteLen(JSON.stringify({...out, convs})) > MAX && convs.length > 1) {
+    convs.shift();
   }
-  // If still too large, trim messages within each conv
-  if (JSON.stringify({...out, convs}).length > MAX) {
+  // If still too large, trim each conv to last 20 messages
+  if (byteLen(JSON.stringify({...out, convs})) > MAX) {
     convs = convs.map(c => ({...c, msgs: (c.msgs||[]).slice(-20)}));
   }
   return {...out, convs};
 }
+
+// ── Strip + trim for Firestore push ──
+function prepareForSync(src) { return trimDbForSync(stripDbImages(src)); }
 
 // ── Option B: pull → merge → push ──
 function syncPush() {
@@ -3639,10 +3645,9 @@ function syncPush() {
       const merged = mergeDb(db, cloudDb);
       db = merged;
 
-      const payload = trimDbForSync(stripDbImages(merged));
       _lastPushTime = Date.now();
       await fbStore.collection('users').doc(fbUser.uid).set({
-        db:         JSON.stringify(payload),
+        db:         JSON.stringify(prepareForSync(merged)),
         cfg:        JSON.stringify(getCfgToSync()),
         updatedAt:  firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -3794,7 +3799,7 @@ fbAuth.onAuthStateChanged(async user => {
     // Push merged result up
     _lastPushTime = Date.now();
     await fbStore.collection('users').doc(fbUser.uid).set({
-      db:        JSON.stringify(stripDbImages(merged)),
+      db:        JSON.stringify(prepareForSync(merged)),
       cfg:       JSON.stringify(getCfgToSync()),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }).catch(()=>{});
