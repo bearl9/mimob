@@ -1192,7 +1192,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.1';
+const APP_VERSION = 'v4.2';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -3522,12 +3522,16 @@ let _syncTimer = null;
 let _lastPushTime = 0;
 let _unsubscribe = null;
 
-// ── Merge two db states: diary/notes by id+ts, convs local wins ──
+// ── Merge two db states: diary/notes by id+ts, convs newer-wins ──
 function mergeDb(local, cloud) {
-  // Convs: local overrides cloud for same id (local is most recent edit)
+  // Convs: take whichever version has the more recent last message
+  const lastMsgTs = c => (c.msgs||[]).at(-1)?.ts || c.ts || 0;
   const convMap = new Map();
   for (const c of (cloud.convs||[])) convMap.set(c.id, c);
-  for (const c of (local.convs||[])) convMap.set(c.id, c);
+  for (const c of (local.convs||[])) {
+    const existing = convMap.get(c.id);
+    if (!existing || lastMsgTs(c) >= lastMsgTs(existing)) convMap.set(c.id, c);
+  }
 
   // Diary entries: union by cat+ts key
   const diaryMap = new Map();
@@ -3698,7 +3702,14 @@ function startRealtimeSync() {
       db = merged;
       try { localStorage.setItem('mimo_web_db', JSON.stringify(stripDbImages(merged))); } catch(e){}
       if (snap.data().cfg) applyCfgFromCloud(JSON.parse(snap.data().cfg));
+      // Fix curId if it no longer exists after merge
+      if (curId && !db.convs.find(c => c.id === curId)) {
+        curId = db.convs[0]?.id || null;
+      }
       renderSB(); renderMsgs(); updateTokenBar();
+      // Scroll to bottom so new messages are visible
+      const msgs = document.getElementById('msgs');
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
       setSyncDot('synced');
     } catch(e) { setSyncDot('error'); showToast('Sync error: ' + (e.code||e.message||e), 4000); }
   }, (e) => { setSyncDot('error'); showToast('Sync error: ' + (e.code||e.message||e), 4000); });
