@@ -3544,8 +3544,14 @@ function mergeDb(local, cloud) {
   for (const c of (cloud.trash||[])) trashMap.set(c.id, c);
   for (const c of (local.trash||[])) trashMap.set(c.id, c);
 
+  // Remove trashed convs from active convs, and strip empty (no messages) convs
+  const trashIds = new Set(trashMap.keys());
+  const mergedConvs = Array.from(convMap.values()).filter(c =>
+    !trashIds.has(c.id) && (c.msgs||[]).length > 0
+  );
+
   return {
-    convs:       Array.from(convMap.values()),
+    convs:       mergedConvs,
     diary:       Array.from(diaryMap.values()),
     diaryChats,
     notes:       Array.from(notesMap.values()),
