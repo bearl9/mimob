@@ -1192,7 +1192,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.4';
+const APP_VERSION = 'v4.5';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -3849,8 +3849,8 @@ fbAuth.onAuthStateChanged(async user => {
     startRealtimeSync();
 
     showToast('Signed in as ' + (user.displayName || user.email));
-    curId = db.convs[0]?.id || null;
-    if (!curId) newConv(); else { renderSB(); renderMsgs(); }
+    curId = null; // always start blank — never auto-select a conversation on load
+    renderSB(); renderMsgs();
     updateTokenBar();
   } else {
     stopRealtimeSync();
