@@ -3584,10 +3584,22 @@ function applyCfgFromCloud(r) {
   try { localStorage.setItem('mimo_web_cfg', JSON.stringify(CFG)); } catch(e){}
 }
 
-// ── Strip base64 images before sending to Firestore ──
+// ── Strip binary data from messages before sending to Firestore ──
 function stripDbImages(src) {
-  const stripMsg = m => (m.image||m.imageData) ? {...m, image:undefined, imageData:undefined, imageMime:undefined} : m;
-  // Strip from regular convs messages
+  // Strip images, audio, files (all binary/large data) from a message
+  const stripMsg = m => {
+    if (!m.images?.length && !m.audios?.length && !m.audioInputs?.length && !m.files?.length && !m.image) return m;
+    return {...m,
+      images:      undefined,  // base64 image attachments
+      audios:      undefined,  // audio file attachments
+      audioInputs: undefined,  // voice recordings
+      files:       undefined,  // PDF/file attachments
+      image:       undefined,  // diary chat image field
+      imageMime:   undefined,
+      imageData:   undefined
+    };
+  };
+  // Strip from regular conv messages
   const convs = (src.convs||[]).map(c => ({...c, msgs:(c.msgs||[]).map(stripMsg)}));
   // Strip from diary chats
   const diaryChats = {};
