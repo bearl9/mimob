@@ -670,6 +670,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
         <button class="ctx-btn ctx-danger" onclick="clearContext()">Clear context</button>
         <button class="ctx-btn ctx-gear" onclick="openSettings()" title="Settings">⚙️</button>
       </div>
+      <div id="app-version" style="text-align:center;font-size:9px;color:var(--tx3);opacity:.5;padding-top:4px;letter-spacing:.5px"></div>
     </div>
   </div>
 
@@ -1186,7 +1187,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.0';
+const APP_VERSION = 'v4.1';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1210,7 +1211,7 @@ const WS_MODES={
 };
 
 // ══ STATE ══
-let db = { convs: [], trash: [] };
+let db = { convs: [], trash: [], trashClearedAt: 0 };
 let curId = null, atts = [], streaming = false, abortCtrl = null;
 let voiceRec = null, isRecording = false;
 let selData = null; // { text, msgIdx } for selection bookmark
@@ -1245,7 +1246,8 @@ const save    = () => {
 };
 const saveCfg = () => { try { localStorage.setItem('mimo_web_cfg', JSON.stringify(CFG)); } catch(e){}; syncPush(); };
 function load() {
-  try { const r = localStorage.getItem('mimo_web_db');  if (r) { const p = JSON.parse(r); db = { convs:[], trash:[], totalTokens:0, diary:[], diaryChats:{}, notes:[], ...p }; } } catch(e){}
+  try { const r = localStorage.getItem('mimo_web_db');  if (r) { const p = JSON.parse(r); db = { convs:[], trash:[], totalTokens:0, diary:[], diaryChats:{}, notes:[], trashClearedAt:0, ...p }; } } catch(e){}
+  const el = document.getElementById('app-version'); if (el) el.textContent = APP_VERSION;
   try { const r = localStorage.getItem('mimo_web_cfg'); if (r) CFG = {...CFG,...JSON.parse(r)}; } catch(e){}
   // Auto-clean trash older than 7 days
   const cutoff = Date.now() - 7*24*60*60*1000;
@@ -1356,7 +1358,9 @@ function permanentDelete(id) {
 function emptyTrash() {
   if (!db.trash.length) return;
   if (!confirm(`Permanently delete all ${db.trash.length} trashed conversation(s)? This cannot be undone.`)) return;
-  db.trash = []; save(); renderSB();
+  db.trash = [];
+  db.trashClearedAt = Date.now();
+  save(); renderSB();
 }
 
 function startRename(id, e) {
@@ -3539,10 +3543,11 @@ function mergeDb(local, cloud) {
   for (const n of (cloud.notes||[])) notesMap.set(n.id||n.ts, n);
   for (const n of (local.notes||[])) notesMap.set(n.id||n.ts, n);
 
-  // Trash: union
+  // Trash: union, but honour trashClearedAt — items deleted before the clear timestamp are gone
+  const maxClearedAt = Math.max(local.trashClearedAt||0, cloud.trashClearedAt||0);
   const trashMap = new Map();
-  for (const c of (cloud.trash||[])) trashMap.set(c.id, c);
-  for (const c of (local.trash||[])) trashMap.set(c.id, c);
+  for (const c of (cloud.trash||[])) { if ((c.deletedAt||0) > maxClearedAt) trashMap.set(c.id, c); }
+  for (const c of (local.trash||[])) { if ((c.deletedAt||0) > maxClearedAt) trashMap.set(c.id, c); }
 
   // Remove trashed convs from active convs, and strip empty (no messages) convs
   const trashIds = new Set(trashMap.keys());
@@ -3551,12 +3556,13 @@ function mergeDb(local, cloud) {
   );
 
   return {
-    convs:       mergedConvs,
-    diary:       Array.from(diaryMap.values()),
+    convs:         mergedConvs,
+    diary:         Array.from(diaryMap.values()),
     diaryChats,
-    notes:       Array.from(notesMap.values()),
-    trash:       Array.from(trashMap.values()),
-    totalTokens: Math.max(local.totalTokens||0, cloud.totalTokens||0)
+    notes:         Array.from(notesMap.values()),
+    trash:         Array.from(trashMap.values()),
+    trashClearedAt: maxClearedAt,
+    totalTokens:   Math.max(local.totalTokens||0, cloud.totalTokens||0)
   };
 }
 
@@ -3639,7 +3645,7 @@ function syncPush() {
     setSyncDot('syncing');
     try {
       const snap = await fbStore.collection('users').doc(fbUser.uid).get();
-      let cloudDb = { convs:[], trash:[], diary:[], diaryChats:{}, notes:[], totalTokens:0 };
+      let cloudDb = { convs:[], trash:[], diary:[], diaryChats:{}, notes:[], totalTokens:0, trashClearedAt:0 };
       if (snap.exists && snap.data().db) cloudDb = {...cloudDb, ...JSON.parse(snap.data().db)};
 
       const merged = mergeDb(db, cloudDb);
@@ -3664,7 +3670,7 @@ async function syncPull() {
   try {
     const snap = await fbStore.collection('users').doc(fbUser.uid).get();
     if (snap.exists) {
-      if (snap.data().db)  { const r = JSON.parse(snap.data().db);  db  = {convs:[],trash:[],diary:[],diaryChats:{},notes:[],totalTokens:0,...r}; }
+      if (snap.data().db)  { const r = JSON.parse(snap.data().db);  db  = {convs:[],trash:[],diary:[],diaryChats:{},notes:[],totalTokens:0,trashClearedAt:0,...r}; }
       if (snap.data().cfg) applyCfgFromCloud(JSON.parse(snap.data().cfg));
     }
     try { localStorage.setItem('mimo_web_db', JSON.stringify(db)); } catch(e){}
