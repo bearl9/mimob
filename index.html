@@ -774,20 +774,21 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
         </div>
         <div style="position:relative">
           <button class="hdr-btn" id="ws-hdr-btn" onclick="toggleWSDropdown(event)" title="Web Search">🌐</button>
-      <div id="ws-dropdown">
-        <div class="ws-dd-row">
-          <span class="ws-dd-label">Web Search</span>
-          <button id="ws-dd-toggle" class="ws-dd-toggle-btn" onclick="toggleWebSearchState()">OFF</button>
+          <div id="ws-dropdown">
+            <div class="ws-dd-row">
+              <span class="ws-dd-label">Web Search</span>
+              <button id="ws-dd-toggle" class="ws-dd-toggle-btn" onclick="toggleWebSearchState()">OFF</button>
+            </div>
+            <div id="ws-dd-modes">
+              <button class="ws-mode-pill active" data-mode="simple" onclick="setWSMode('simple')">Simple</button>
+              <button class="ws-mode-pill" data-mode="pro" onclick="setWSMode('pro')">Pro</button>
+              <button class="ws-mode-pill" data-mode="admin" onclick="setWSMode('admin')">Admin</button>
+            </div>
+          </div>
         </div>
-        <div id="ws-dd-modes">
-          <button class="ws-mode-pill active" data-mode="simple" onclick="setWSMode('simple')">Simple</button>
-          <button class="ws-mode-pill" data-mode="pro" onclick="setWSMode('pro')">Pro</button>
-          <button class="ws-mode-pill" data-mode="admin" onclick="setWSMode('admin')">Admin</button>
-        </div>
-        </div><!-- end ws position:relative -->
-      </div><!-- end buttons row -->
+      </div>
       <div id="hdr-version" style="font-size:8px;color:var(--tx3);opacity:.45;letter-spacing:.3px;line-height:1"></div>
-    </div><!-- end hdr-right column -->
+    </div>
   </div>
   <div id="diary-mode-banner">
     <button id="diary-back-btn" onclick="closeDiaryMain()">← Back</button>
