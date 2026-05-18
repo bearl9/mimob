@@ -1192,7 +1192,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.3';
+const APP_VERSION = 'v4.4';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1333,9 +1333,10 @@ document.getElementById('setup-key').addEventListener('keydown',e=>{if(e.key==='
 
 // ══ CONVERSATIONS ══
 function newConv() {
-  const id = 'c' + Date.now();
-  db.convs.unshift({ id, title: 'New Conversation', msgs: [], ts: Date.now() });
-  save(); switchConv(id);
+  // Just clear the UI — conversation is only created when first message is sent
+  curId = null;
+  renderSB(); renderMsgs(); closeSBDrawer();
+  document.getElementById('input').focus();
 }
 function switchConv(id) { curId = id; renderSB(); renderMsgs(); closeSBDrawer(); document.getElementById('input').focus(); }
 function curConv() { return db.convs.find(c => c.id === curId); }
@@ -1772,7 +1773,13 @@ async function send() {
   const text = inputEl.value.trim();
   if (!text&&!atts.length) return;
   checkTokenLimit();
-  if (!curId) newConv();
+  if (!curId) {
+    // Create conversation only on first message sent
+    const id = 'c' + Date.now();
+    db.convs.unshift({ id, title: 'New Conversation', msgs: [], ts: Date.now() });
+    curId = id;
+    renderSB();
+  }
   const conv = curConv();
   const isVoice=pendingVoice; pendingVoice=false;
   const userMsg = {
@@ -2599,12 +2606,8 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 
 // ══ INIT ══
 load();
-if(!db.convs.length)newConv();
-else{
-  const savedId = localStorage.getItem('mimo_cur_id');
-  curId = (savedId && db.convs.find(c=>c.id===savedId)) ? savedId : db.convs[0].id;
-  renderSB(); renderMsgs();
-}
+curId = null; // always start on blank new chat
+renderSB(); renderMsgs();
 updateTokenBar();
 // Show API key setup if not configured
 if(!CFG.apiKey){
@@ -3702,17 +3705,27 @@ function startRealtimeSync() {
     if (Date.now() - _lastPushTime < 8000) return;   // we just pushed, skip echo
 
     try {
-      const remote  = JSON.parse(snap.data().db);
-      const merged  = mergeDb(db, remote);
+      const remote = JSON.parse(snap.data().db);
+      // Snapshot last-message timestamps before merge (for live follow)
+      const prevLastTs = new Map();
+      for (const c of db.convs) prevLastTs.set(c.id, (c.msgs||[]).at(-1)?.ts || 0);
+
+      const merged = mergeDb(db, remote);
       db = merged;
       try { localStorage.setItem('mimo_web_db', JSON.stringify(stripDbImages(merged))); } catch(e){}
       if (snap.data().cfg) applyCfgFromCloud(JSON.parse(snap.data().cfg));
-      // Fix curId if it no longer exists after merge
-      if (curId && !db.convs.find(c => c.id === curId)) {
-        curId = db.convs[0]?.id || null;
+
+      // Live follow: switch to whichever conversation gained new messages
+      let followId = null, followTs = 0;
+      for (const c of db.convs) {
+        const newTs = (c.msgs||[]).at(-1)?.ts || 0;
+        const oldTs = prevLastTs.get(c.id) || 0;
+        if (newTs > oldTs && newTs > followTs) { followTs = newTs; followId = c.id; }
       }
+      if (followId) curId = followId;
+      else if (curId && !db.convs.find(c => c.id === curId)) curId = null;
+
       renderSB(); renderMsgs(); updateTokenBar();
-      // Scroll to bottom so new messages are visible
       const msgs = document.getElementById('msgs');
       if (msgs) msgs.scrollTop = msgs.scrollHeight;
       setSyncDot('synced');
