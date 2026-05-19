@@ -781,7 +781,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
           <div class="av-circle"><div class="av-guest">👤</div></div>
           <div id="sync-dot"></div>
         </div>
-        <button class="hdr-btn" id="ws-hdr-btn" onclick="openWsDialog()" title="Smart Web Search">🌐</button>
+        <button class="hdr-btn" id="ws-hdr-btn" onclick="openWsDialog()" title="Smart Web Search">🔍</button>
       </div>
       <div id="hdr-version" style="font-size:8px;color:var(--tx3);opacity:.45;letter-spacing:.3px;line-height:1"></div>
     </div>
@@ -894,7 +894,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 <div id="ws-dialog">
   <div id="ws-dlg-box">
     <div class="ws-dlg-hdr">
-      <span class="ws-dlg-title">🌐 Smart Web Search</span>
+      <span class="ws-dlg-title">🔍 Smart Web Search</span>
       <button class="ws-dlg-close" onclick="closeWsDialog()">✕</button>
     </div>
 
@@ -1224,7 +1224,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.6';
+const APP_VERSION = 'v4.61';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -2326,7 +2326,6 @@ function openWsDialog(){
   document.getElementById('ws-dlg-optimized-wrap').style.display='none';
   document.getElementById('ws-dlg-opt-btn').disabled=false;
   document.getElementById('ws-dlg-search-btn').disabled=false;
-  _updateWsDlgModeUI();
   document.getElementById('ws-dialog').classList.add('open');
   setTimeout(()=>document.getElementById('ws-dlg-input').focus(),80);
 }
