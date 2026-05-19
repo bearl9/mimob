@@ -506,11 +506,6 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 #ws-dlg-optimized{width:100%;padding:9px 12px;border:1.5px solid var(--grn);border-radius:10px;background:rgba(107,125,82,.06);color:var(--tx);font-size:13px;font-family:inherit;line-height:1.5;resize:none;min-height:56px}
 #ws-dlg-optimized:focus{outline:none;border-color:var(--acc)}
 .ws-opt-badge{font-size:10px;color:var(--grn);font-weight:600;letter-spacing:.3px}
-.ws-dlg-mode-row{display:flex;align-items:center;gap:6px}
-.ws-dlg-mode-label{font-size:11px;color:var(--tx3);font-weight:600;margin-right:2px}
-.ws-mode-pill{padding:4px 12px;border-radius:8px;border:1px solid var(--bdr2);background:var(--sur2);color:var(--tx2);font-size:11px;cursor:pointer;font-family:inherit;transition:all .1s;font-weight:500}
-.ws-mode-pill:hover{background:var(--crust);color:var(--tx)}
-.ws-mode-pill.active{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
 .ws-dlg-cost-note{font-size:10px;color:var(--tx3);font-style:italic}
 .ws-dlg-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .ws-dlg-footer-actions{display:flex;gap:8px}
@@ -922,15 +917,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
     </div>
 
     <div class="ws-dlg-footer">
-      <div>
-        <div class="ws-dlg-mode-row">
-          <span class="ws-dlg-mode-label">Mode:</span>
-          <button class="ws-mode-pill active" data-mode="simple" onclick="setWsDlgMode('simple')">Simple</button>
-          <button class="ws-mode-pill" data-mode="pro" onclick="setWsDlgMode('pro')">Pro</button>
-          <button class="ws-mode-pill" data-mode="admin" onclick="setWsDlgMode('admin')">Admin</button>
-        </div>
-        <div class="ws-dlg-cost-note" id="ws-dlg-cost-note">Simple · 1 search ($0.005)</div>
-      </div>
+      <div class="ws-dlg-cost-note">1 search · $0.005 · no result cap</div>
       <div class="ws-dlg-footer-actions">
         <button class="btn btn-g" onclick="closeWsDialog()">Cancel</button>
         <button class="btn btn-p" id="ws-dlg-search-btn" onclick="executeWsSearch()">🔍 Search</button>
@@ -2346,17 +2333,6 @@ function openWsDialog(){
 function closeWsDialog(){
   document.getElementById('ws-dialog').classList.remove('open');
 }
-function setWsDlgMode(mode){
-  CFG.wsMode=mode;saveCfg();
-  _updateWsDlgModeUI();
-}
-function _updateWsDlgModeUI(){
-  const mode=CFG.wsMode||'simple';
-  document.querySelectorAll('#ws-dlg-box .ws-mode-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===mode));
-  const costMap={simple:'Simple · 1 search ($0.005)',pro:'Pro · 1 search ($0.005)',admin:'Admin · 1 search ($0.005)'};
-  const noteEl=document.getElementById('ws-dlg-cost-note');
-  if(noteEl)noteEl.textContent=costMap[mode]||'';
-}
 async function optimizeWsQuery(){
   const raw=document.getElementById('ws-dlg-input').value.trim();
   if(!raw){showToast('⚠️ Enter your question first');return;}
@@ -2419,9 +2395,8 @@ async function executeWsSearch(){
   document.getElementById('send-btn').style.display='none';
   document.getElementById('stop-btn').style.display='flex';
   streaming=true;abortCtrl=new AbortController();
-  const wsP=WS_MODES[CFG.wsMode||'simple'];
   let acc='',wsAnnotations=[];
-  asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">🔍 Searching… ${WS_MODES[CFG.wsMode||'simple'].label} mode</em><span class="cursor"></span>`;
+  asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">🔍 Searching…</em><span class="cursor"></span>`;
   try{
     const sp=((CFG.systemPrompt||'')+getCurrentTimestamp()+getCurrencyNote()).trim();
     const msgs=buildOAI(conv.msgs,sp);
@@ -2433,7 +2408,7 @@ async function executeWsSearch(){
         max_tokens:8192,
         stream:true,
         messages:msgs,
-        tools:[{type:'web_search',max_keyword:wsP.max_keyword,limit:wsP.limit,force_search:true}]
+        tools:[{type:'web_search',max_keyword:1,force_search:true}]
       }),
       signal:abortCtrl.signal
     });
@@ -2557,8 +2532,6 @@ async function testVoice(lang){
   }
 }
 document.getElementById('set-modal').addEventListener('click',e=>{if(e.target===document.getElementById('set-modal'))closeSettings();});
-// Init web search dialog mode UI
-(function(){ _updateWsDlgModeUI(); })();
 
 // ══ EXPORT ══
 
