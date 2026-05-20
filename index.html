@@ -1709,6 +1709,9 @@ function copyMsgText(btn, msgIdx) {
 
 // ══ MARKDOWN ══
 marked.setOptions({ breaks:true, gfm:true });
+const _mdRenderer = new marked.Renderer();
+_mdRenderer.link = (href, title, text) => `<a href="${href}"${title?` title="${title}"`:''}  target="_blank" rel="noopener noreferrer">${text}</a>`;
+marked.use({ renderer: _mdRenderer });
 function renderMD(el, text) {
   el.innerHTML = marked.parse(text);
   el.querySelectorAll('pre').forEach(pre=>{

@@ -1224,7 +1224,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.62';
+const APP_VERSION = 'v4.63';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1741,6 +1741,9 @@ function copyMsgText(btn, msgIdx) {
 
 // ══ MARKDOWN ══
 marked.setOptions({ breaks:true, gfm:true });
+const _mdRenderer = new marked.Renderer();
+_mdRenderer.link = (href, title, text) => `<a href="${href}"${title?` title="${title}"`:''}  target="_blank" rel="noopener noreferrer">${text}</a>`;
+marked.use({ renderer: _mdRenderer });
 function renderMD(el, text) {
   el.innerHTML = marked.parse(text);
   el.querySelectorAll('pre').forEach(pre=>{
