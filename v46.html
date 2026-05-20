@@ -1224,7 +1224,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.61';
+const APP_VERSION = 'v4.62';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1267,19 +1267,39 @@ if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 // ══ STORAGE ══
-const save    = () => {
-  try {
-    // Strip raw image data from diaryChats before persisting (they're large and not needed after display)
-    const dbToSave = {...db, diaryChats: {}};
-    for(const k of Object.keys(db.diaryChats||{})){
-      dbToSave.diaryChats[k] = db.diaryChats[k].map(m => m.image ? {...m, image:undefined, imageMime:undefined} : m);
-    }
-    localStorage.setItem('mimo_web_db', JSON.stringify(dbToSave));
-    if (curId) localStorage.setItem('mimo_cur_id', curId);
-  } catch(e){
-    console.error('MiMo save failed:',e);
-    showToast('⚠️ Could not save — storage may be full. Please clear some browser data.');
+const save = () => {
+  // Strip diary image data first (large, not needed after display)
+  const dbToSave = {...db, diaryChats:{}};
+  for(const k of Object.keys(db.diaryChats||{}))
+    dbToSave.diaryChats[k]=db.diaryChats[k].map(m=>m.image?{...m,image:undefined,imageMime:undefined}:m);
+
+  const tryWrite = (data) => {
+    try { localStorage.setItem('mimo_web_db',JSON.stringify(data)); if(curId)localStorage.setItem('mimo_cur_id',curId); return true; }
+    catch(e){ return false; }
+  };
+
+  // Attempt 1: normal save
+  if(tryWrite(dbToSave)){syncPush();return;}
+
+  // Attempt 2: strip all images from conversations too
+  const stripped = stripDbImages(dbToSave);
+  if(tryWrite(stripped)){showToast('⚠️ Storage tight — images stripped to save space');syncPush();return;}
+
+  // Attempt 3: strip images + trim oldest conversations down to fit
+  const convs=[...(stripped.convs||[])].sort((a,b)=>(a.ts||0)-(b.ts||0));
+  let trimmed={...stripped,convs};
+  while(trimmed.convs.length>1){
+    trimmed={...trimmed,convs:trimmed.convs.slice(1)};
+    if(tryWrite(trimmed)){showToast('⚠️ Storage full — oldest chats trimmed to free space');syncPush();return;}
   }
+
+  // Last resort: save only the current conversation
+  const cur=db.convs.find(c=>c.id===curId);
+  const minimal={...stripped,convs:cur?[cur]:[]};
+  if(tryWrite(minimal)){showToast('⚠️ Storage critically full — only current chat kept. Delete old chats!');syncPush();return;}
+
+  console.error('MiMo save failed: storage full even after trimming');
+  showToast('⚠️ Storage completely full — please delete old conversations in the sidebar.');
   syncPush();
 };
 const saveCfg = () => { try { localStorage.setItem('mimo_web_cfg', JSON.stringify(CFG)); } catch(e){}; syncPush(); };
