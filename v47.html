@@ -776,12 +776,12 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
     <div id="hdr-title">New Conversation</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0">
       <div style="display:flex;align-items:center">
-        <button class="hdr-btn" id="pin-hdr-btn" onclick="togglePinsPanel()" title="Pinned Messages">📌</button>
+        <button class="hdr-btn" id="pin-hdr-btn" onclick="togglePinsPanel()" title="Pinned Messages" style="color:var(--acc)">★</button>
         <div id="hdr-avatar" onclick="openSettings();switchTab('sync')" title="Sync / Account">
           <div class="av-circle"><div class="av-guest">👤</div></div>
           <div id="sync-dot"></div>
         </div>
-        <button class="hdr-btn" id="ws-hdr-btn" onclick="openWsDialog()" title="Smart Web Search">🔍</button>
+        <button class="hdr-btn" id="ws-hdr-btn" onclick="openWsDialog()" title="Jina AI Web Search" style="font-size:11px;font-weight:800;letter-spacing:-.3px;color:var(--acc)">J·AI</button>
       </div>
       <div id="hdr-version" style="font-size:8px;color:var(--tx3);opacity:.45;letter-spacing:.3px;line-height:1"></div>
     </div>
@@ -1224,7 +1224,8 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.71';
+const APP_VERSION = 'v4.72';
+const JINA_DEFAULT_KEY = 'jina_f0fa440f2a754e7b9d9930c2654864e0yQCmwwYcGyd0CrSMveAhpwQY6zSO';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1546,7 +1547,16 @@ function emptyHTML() {
     </div>`:'';
   return`<div class="empty" style="justify-content:flex-start;padding-top:48px">
     <div style="font-size:22px;font-weight:700;color:var(--tx);font-family:'Lora',Georgia,serif">MiMo Chat</div>
-    <div style="font-size:11px;color:var(--tx3);margin-top:4px">${APP_VERSION} · ${CFG?.model||'mimo-v2.5-pro'}</div>
+
+    <div style="width:100%;max-width:300px;margin-top:14px;background:var(--sur);border:1px solid var(--bdr2);border-radius:12px;padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc)">What's New · ${APP_VERSION}</span>
+      </div>
+      <div style="font-size:13px;color:var(--tx);font-weight:600;margin-bottom:3px">Jina AI Web Search</div>
+      <div style="font-size:12px;color:var(--tx2);line-height:1.5">Free web search powered by Jina AI — no cost per query. Tap <button onclick="openWsDialog()" style="display:inline;background:var(--sur2);border:1px solid var(--bdr2);border-radius:6px;padding:1px 8px;font-size:11px;font-weight:800;color:var(--acc);cursor:pointer;font-family:inherit;letter-spacing:-.3px">J·AI</button> in the header to search the web.</div>
+    </div>
+
+    <div style="font-size:11px;color:var(--tx3);margin-top:12px">${APP_VERSION} · ${CFG?.model||'mimo-v2.5-pro'}</div>
     ${recentHTML}
   </div>`;
 }
@@ -2332,7 +2342,6 @@ function openSettings(){
   document.getElementById('key-in').type='password';
   document.getElementById('sys-in').value=CFG.systemPrompt;
   document.getElementById('model-in').value=CFG.model;
-  document.getElementById('ws-key-in').value=CFG.wsApiKey||'';
   document.getElementById('jina-key-in').value=CFG.jinaApiKey||'';
   document.getElementById('currency-in').value=CFG.defaultCurrency||'';
   document.getElementById('tts-en-in').value=CFG.ttsVoiceEn||'';
@@ -2355,7 +2364,6 @@ function saveSettings(){
   }
   CFG.ttsVoiceEn=newEn;
   CFG.ttsVoiceZh=newZh;
-  CFG.wsApiKey=document.getElementById('ws-key-in').value.trim();
   CFG.jinaApiKey=document.getElementById('jina-key-in').value.trim();
   CFG.defaultCurrency=document.getElementById('currency-in').value.trim().toUpperCase();
   if(typeof updateHdrSub==='function')updateHdrSub();
@@ -2414,7 +2422,7 @@ async function optimizeWsQuery(){
 }
 async function executeWsSearch(){
   if(!CFG.apiKey){showToast('⚠️ API key not set in Settings → Config');return;}
-  if(!CFG.jinaApiKey){showToast('⚠️ Jina API key not set in Settings → Config');return;}
+  const jinaKey=CFG.jinaApiKey||JINA_DEFAULT_KEY;
   // Prefer optimized query, fall back to raw input
   const optimizedEl=document.getElementById('ws-dlg-optimized');
   const rawEl=document.getElementById('ws-dlg-input');
@@ -2446,7 +2454,7 @@ async function executeWsSearch(){
   let searchResults='';
   try{
     const jinaRes=await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`,{
-      headers:{'Accept':'text/plain','X-Return-Format':'markdown','Authorization':'Bearer '+CFG.jinaApiKey},
+      headers:{'Accept':'text/plain','X-Return-Format':'markdown','Authorization':'Bearer '+jinaKey},
       signal:AbortSignal.timeout(20000)
     });
     if(!jinaRes.ok)throw new Error(`Jina ${jinaRes.status}`);
