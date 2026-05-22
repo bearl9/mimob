@@ -1212,7 +1212,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.78';
+const APP_VERSION = 'v4.79';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -2377,10 +2377,7 @@ async function executeWsSearch(){
   if(!jinaKey){showToast('⚠️ Enter your Jina API key');return;}
   // Save key for convenience next time
   CFG.jinaApiKey=jinaKey;saveCfg();
-  // Prefer optimized query, fall back to raw input
-  const optimizedEl=document.getElementById('ws-dlg-optimized');
-  const rawEl=document.getElementById('ws-dlg-input');
-  const query=(optimizedEl.value.trim()||rawEl.value.trim());
+  const query=(document.getElementById('ws-dlg-input')?.value||'').trim();
   if(!query){showToast('⚠️ Enter a search query');return;}
   closeWsDialog();
   // Ensure a conversation exists
@@ -2429,8 +2426,7 @@ async function executeWsSearch(){
   asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">✍️ Synthesizing results…</em><span class="cursor"></span>`;
   try{
     const sp=((CFG.systemPrompt||'')+getCurrentTimestamp()+getCurrencyNote()).trim();
-    // Build messages: prior conversation context + search results injected as context
-    const priorMsgs=buildOAI(conv.msgs.slice(0,-1),sp);
+    // Web search synthesis: standalone — no prior context (prevents token overflow on repeat searches)
     const synthMsg={
       role:'user',
       content:`Web search results for: "${query}"\n\n${searchResults.slice(0,14000)}\n\n---\nUsing the search results above, please answer: ${query}`
@@ -2442,7 +2438,7 @@ async function executeWsSearch(){
         model:CFG.model,
         max_tokens:8192,
         stream:true,
-        messages:[...priorMsgs,synthMsg]
+        messages:[...(sp?[{role:'system',content:sp}]:[]),synthMsg]
       }),
       signal:abortCtrl.signal
     });
