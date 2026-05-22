@@ -1224,7 +1224,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.63';
+const APP_VERSION = 'v4.64';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -3494,19 +3494,14 @@ function startAnalyseChat(){
   const lines=entries.map(e=>{
     const c=DIARY_CATS[e.category]||{emoji:'📝',label:e.category};
     const dt=new Date(e.ts).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true});
-    // Extract just the "Recording: ..." summary line from the AI response
-    const recMatch=(e.note||'').match(/Recording:\s*(.+)/i);
-    // Fallback: last non-empty line (summary is usually at end), strip leading bullets/dashes
-    const lastLine=(e.note||'').split('\n').map(l=>l.trim()).filter(l=>l).pop()||'';
-    const summary=recMatch?recMatch[1].replace(/\.$/,'').trim():lastLine.replace(/^[-*•]\s*/,'').slice(0,120);
-    const price=e.price?` 💰 ${e.price}`:'';
-    return`[${c.emoji} ${c.label}] ${dt} — ${summary}${price}`;
-  }).join('\n');
-  const ctx=`📓 Diary Analysis Request\n\nSelected diary entries (${entries.length}):\n\n${lines}\n\nPlease analyse these entries`;
+    const price=e.price?` [Price: ${e.price}]`:'';
+    return`[${dt}${price}]\n${e.note||'(empty)'}`;
+  }).join('\n---\n');
+  const ctx=`Diary Analysis Request\n\nSelected diary entries (${entries.length}):\n\n${lines}\n\nPlease analyse these entries`;
   closeAnalyseModal();switchSBTab('mimo');newConv();
   const inp=document.getElementById('input');
   inp.value=ctx;autoResize(inp);inp.focus();
-  showToast(`📊 ${entries.length} entries attached — review and send!`);
+  showToast(`${entries.length} entries attached — review and send!`);
 }
 document.getElementById('analyse-modal').addEventListener('click',e=>{if(e.target===document.getElementById('analyse-modal'))closeAnalyseModal();});
 
