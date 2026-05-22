@@ -1212,7 +1212,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.80';
+const APP_VERSION = 'v4.81';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -2404,12 +2404,13 @@ async function executeWsSearch(){
   asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">🔍 Searching via Jina AI…</em><span class="cursor"></span>`;
   let searchResults='';
   try{
-    const jinaRes=await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`,{
+    const jinaRes=await fetch(`https://s.jina.ai/${encodeURIComponent(query)}?count=3`,{
       headers:{
         'Accept':'text/plain',
         'X-Return-Format':'markdown',
         'Authorization':'Bearer '+jinaKey,
-        'X-Retain-Images':'none'
+        'X-Retain-Images':'none',
+        'X-With-Links-Summary':'false'
       },
       signal:AbortSignal.timeout(20000)
     });
