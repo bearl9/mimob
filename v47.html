@@ -969,6 +969,12 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
           <option value="THB"><option value="IDR"><option value="CAD">
         </datalist>
       </div>
+      <div class="fg">
+        <label class="fl">🔍 Web Search API Key
+          <span style="font-size:10px;color:var(--tx3);font-weight:400;margin-left:6px">Required for Smart Web Search · $0.005/search</span>
+        </label>
+        <input class="fi" id="ws-key-in" type="password" placeholder="tp-xxxxxxxxxxxx" autocomplete="new-password" spellcheck="false">
+      </div>
       <div class="ma">
         <button class="btn btn-g" onclick="closeSettings()">Cancel</button>
         <button class="btn btn-p" onclick="saveSettings()">Save Changes</button>
@@ -1205,7 +1211,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.82';
+const APP_VERSION = 'v4.83';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -2323,6 +2329,7 @@ function openSettings(){
   document.getElementById('sys-in').value=CFG.systemPrompt;
   document.getElementById('model-in').value=CFG.model;
   document.getElementById('currency-in').value=CFG.defaultCurrency||'';
+  document.getElementById('ws-key-in').value=CFG.wsApiKey||'';
   document.getElementById('tts-en-in').value=CFG.ttsVoiceEn||'';
   document.getElementById('tts-zh-in').value=CFG.ttsVoiceZh||'';
   switchTab('config');document.getElementById('set-modal').classList.add('open');
@@ -2344,6 +2351,7 @@ function saveSettings(){
   CFG.ttsVoiceEn=newEn;
   CFG.ttsVoiceZh=newZh;
   CFG.defaultCurrency=document.getElementById('currency-in').value.trim().toUpperCase();
+  CFG.wsApiKey=document.getElementById('ws-key-in').value.trim();
   if(typeof updateHdrSub==='function')updateHdrSub();
   saveCfg();closeSettings();
 }
