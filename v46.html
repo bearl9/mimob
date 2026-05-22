@@ -968,13 +968,13 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
         </div>
       </div>
       <div class="fg"><label class="fl">Model</label>
-        <input class="fi" id="model-in" value="mimo-v2.5-pro">
+        <input class="fi" id="model-in" value="mimo-v2.5-pro" autocomplete="off" spellcheck="false">
       </div>
       <div class="fg">
         <label class="fl">💰 Default Currency
           <span style="font-size:10px;color:var(--tx3);font-weight:400;margin-left:6px">Prices in other currencies will auto-convert in chat &amp; diary</span>
         </label>
-        <input class="fi" id="currency-in" list="currency-list" placeholder="e.g. MYR" style="max-width:200px">
+        <input class="fi" id="currency-in" list="currency-list" placeholder="e.g. MYR" style="max-width:200px" autocomplete="off">
         <datalist id="currency-list">
           <option value="MYR"><option value="USD"><option value="SGD">
           <option value="GBP"><option value="EUR"><option value="JPY">
@@ -986,7 +986,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
         <label class="fl">🌐 Web Search API Key
           <span style="font-size:10px;color:var(--tx3);font-weight:400;margin-left:6px">Required for Search — get from MiMo Console → API Keys</span>
         </label>
-        <input class="fi" id="ws-key-in" type="password" placeholder="Paste your MiMo API key here (not the tp- token plan key)">
+        <input class="fi" id="ws-key-in" type="password" placeholder="Paste your MiMo API key here (not the tp- token plan key)" autocomplete="off" spellcheck="false">
       </div>
       <div class="ma">
         <button class="btn btn-g" onclick="closeSettings()">Cancel</button>
@@ -1224,7 +1224,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.63';
+const APP_VERSION = 'v4.64';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1520,15 +1520,35 @@ function renderMsgs() {
 }
 
 function emptyHTML() {
-  return `<div class="empty"><div class="empty-icon">⚡</div><h2>MiMo Chat</h2>
-    <p>Powered by mimo-v2.5-pro · Vision · PDF · Code · Audio · Browse<br>Select any text in a response to bookmark it</p>
-    <p style="font-size:11px;color:var(--tx3);margin-top:4px">${APP_VERSION} · ${CFG?.model||'mimo-v2.5-pro'}</p>
-    <div class="chips">
-      <div class="chip" onclick="suggest('Explain this to me simply')">✨ Explain something</div>
-      <div class="chip" onclick="suggest('Write Python code for')">💻 Write code</div>
-      <div class="chip" onclick="suggest('Summarize this document')">📄 Summarize a doc</div>
-      <div class="chip" onclick="suggest('Help me debug this error:')">🐛 Debug an error</div>
-    </div></div>`;
+  // Recent conversations sorted by last message time
+  const recent=(db.convs||[])
+    .filter(c=>(c.msgs||[]).length>0)
+    .sort((a,b)=>((b.msgs||[]).at(-1)?.ts||b.ts||0)-((a.msgs||[]).at(-1)?.ts||a.ts||0))
+    .slice(0,6);
+  const fmtRecent=ts=>{
+    if(!ts)return'';
+    const now=Date.now(),diff=now-ts,d=new Date(ts);
+    if(diff<86400000)return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+    if(diff<172800000)return'Yesterday';
+    if(diff<604800000)return d.toLocaleDateString('en-US',{weekday:'short'});
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  };
+  const recentHTML=recent.length?`
+    <div style="width:100%;max-width:300px;margin-top:20px">
+      <div style="font-size:10px;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">Recently Updated</div>
+      ${recent.map(c=>{
+        const lastTs=(c.msgs||[]).at(-1)?.ts||c.ts||0;
+        return`<div onclick="switchConv('${c.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:10px;cursor:pointer;transition:background .12s;margin-bottom:3px" onmouseenter="this.style.background='var(--sur2)'" onmouseleave="this.style.background='transparent'">
+          <span style="font-size:13px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc(c.title||'Untitled')}</span>
+          <span style="font-size:10px;color:var(--tx3);margin-left:10px;flex-shrink:0">${fmtRecent(lastTs)}</span>
+        </div>`;
+      }).join('')}
+    </div>`:'';
+  return`<div class="empty" style="justify-content:flex-start;padding-top:48px">
+    <div style="font-size:22px;font-weight:700;color:var(--tx);font-family:'Lora',Georgia,serif">MiMo Chat</div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:4px">${APP_VERSION} · ${CFG?.model||'mimo-v2.5-pro'}</div>
+    ${recentHTML}
+  </div>`;
 }
 
 function appendDOM(msg, isStreaming=false, msgIdx=-1) {
@@ -3492,21 +3512,19 @@ function startAnalyseChat(){
   if(!selected.length){showToast('⚠️ Select at least one entry');return;}
   const entries=(db.diary||[]).filter(e=>selected.includes(e.id));
   const lines=entries.map(e=>{
-    const c=DIARY_CATS[e.category]||{emoji:'📝',label:e.category};
+    const c=DIARY_CATS[e.category]||{label:e.category};
     const dt=new Date(e.ts).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true});
-    // Extract just the "Recording: ..." summary line from the AI response
-    const recMatch=(e.note||'').match(/Recording:\s*(.+)/i);
-    // Fallback: last non-empty line (summary is usually at end), strip leading bullets/dashes
-    const lastLine=(e.note||'').split('\n').map(l=>l.trim()).filter(l=>l).pop()||'';
-    const summary=recMatch?recMatch[1].replace(/\.$/,'').trim():lastLine.replace(/^[-*•]\s*/,'').slice(0,120);
-    const price=e.price?` 💰 ${e.price}`:'';
-    return`[${c.emoji} ${c.label}] ${dt} — ${summary}${price}`;
+    // Use full "Recording: ..." line if present, otherwise full note (no truncation)
+    const recMatch=(e.note||'').match(/Recording:\s*([\s\S]+)/i);
+    const content=recMatch?recMatch[1].trim():(e.note||'').trim();
+    const price=e.price?` | Price: ${e.price}`:'';
+    return`[${c.label}] ${dt} — ${content}${price}`;
   }).join('\n');
-  const ctx=`📓 Diary Analysis Request\n\nSelected diary entries (${entries.length}):\n\n${lines}\n\nPlease analyse these entries`;
+  const ctx=`Diary Analysis Request\n\nSelected diary entries (${entries.length}):\n\n${lines}\n\nPlease analyse these entries`;
   closeAnalyseModal();switchSBTab('mimo');newConv();
   const inp=document.getElementById('input');
   inp.value=ctx;autoResize(inp);inp.focus();
-  showToast(`📊 ${entries.length} entries attached — review and send!`);
+  showToast(`${entries.length} entries attached — review and send!`);
 }
 document.getElementById('analyse-modal').addEventListener('click',e=>{if(e.target===document.getElementById('analyse-modal'))closeAnalyseModal();});
 
