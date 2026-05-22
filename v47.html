@@ -2409,8 +2409,7 @@ async function executeWsSearch(){
         'Accept':'text/plain',
         'X-Return-Format':'markdown',
         'Authorization':'Bearer '+jinaKey,
-        'X-Retain-Images':'none',
-        'X-Top-K':'3'
+        'X-Retain-Images':'none'
       },
       signal:AbortSignal.timeout(20000)
     });
