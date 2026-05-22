@@ -983,10 +983,10 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
         </datalist>
       </div>
       <div class="fg">
-        <label class="fl">🌐 Web Search API Key
-          <span style="font-size:10px;color:var(--tx3);font-weight:400;margin-left:6px">Required for Search — get from MiMo Console → API Keys</span>
+        <label class="fl">🔍 Jina AI API Key
+          <span style="font-size:10px;color:var(--tx3);font-weight:400;margin-left:6px">Free — get yours at <a href="https://jina.ai" target="_blank" rel="noopener">jina.ai</a> (1M tokens/month free)</span>
         </label>
-        <input class="fi" id="ws-key-in" type="password" placeholder="Paste your MiMo API key here (not the tp- token plan key)" autocomplete="off" spellcheck="false">
+        <input class="fi" id="jina-key-in" type="password" placeholder="jina_xxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
       </div>
       <div class="ma">
         <button class="btn btn-g" onclick="closeSettings()">Cancel</button>
@@ -1224,7 +1224,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.7';
+const APP_VERSION = 'v4.71';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1240,7 +1240,7 @@ const TTS_VOICES = [
   {id:'Milo',label:'Milo (English Male)',lang:'en'},
   {id:'Dean',label:'Dean (English Male)',lang:'en'},
 ];
-let CFG = { model: 'mimo-v2.5-pro', systemPrompt: '', apiKey: '', ttsVoiceEn: '', ttsVoiceZh: '', webSearch: false, wsApiKey: '', wsMode: 'simple', defaultCurrency: '' };
+let CFG = { model: 'mimo-v2.5-pro', systemPrompt: '', apiKey: '', ttsVoiceEn: '', ttsVoiceZh: '', webSearch: false, wsApiKey: '', wsMode: 'simple', defaultCurrency: '', jinaApiKey: '' };
 const WS_MODES={
   simple:{max_keyword:1,limit:2,label:'Simple'},
   pro:   {max_keyword:2,limit:3,label:'Pro'},
@@ -2333,6 +2333,7 @@ function openSettings(){
   document.getElementById('sys-in').value=CFG.systemPrompt;
   document.getElementById('model-in').value=CFG.model;
   document.getElementById('ws-key-in').value=CFG.wsApiKey||'';
+  document.getElementById('jina-key-in').value=CFG.jinaApiKey||'';
   document.getElementById('currency-in').value=CFG.defaultCurrency||'';
   document.getElementById('tts-en-in').value=CFG.ttsVoiceEn||'';
   document.getElementById('tts-zh-in').value=CFG.ttsVoiceZh||'';
@@ -2355,6 +2356,7 @@ function saveSettings(){
   CFG.ttsVoiceEn=newEn;
   CFG.ttsVoiceZh=newZh;
   CFG.wsApiKey=document.getElementById('ws-key-in').value.trim();
+  CFG.jinaApiKey=document.getElementById('jina-key-in').value.trim();
   CFG.defaultCurrency=document.getElementById('currency-in').value.trim().toUpperCase();
   if(typeof updateHdrSub==='function')updateHdrSub();
   saveCfg();closeSettings();
@@ -2412,6 +2414,7 @@ async function optimizeWsQuery(){
 }
 async function executeWsSearch(){
   if(!CFG.apiKey){showToast('⚠️ API key not set in Settings → Config');return;}
+  if(!CFG.jinaApiKey){showToast('⚠️ Jina API key not set in Settings → Config');return;}
   // Prefer optimized query, fall back to raw input
   const optimizedEl=document.getElementById('ws-dlg-optimized');
   const rawEl=document.getElementById('ws-dlg-input');
@@ -2443,7 +2446,7 @@ async function executeWsSearch(){
   let searchResults='';
   try{
     const jinaRes=await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`,{
-      headers:{'Accept':'text/plain','X-Return-Format':'markdown'},
+      headers:{'Accept':'text/plain','X-Return-Format':'markdown','Authorization':'Bearer '+CFG.jinaApiKey},
       signal:AbortSignal.timeout(20000)
     });
     if(!jinaRes.ok)throw new Error(`Jina ${jinaRes.status}`);
