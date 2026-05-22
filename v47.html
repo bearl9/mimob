@@ -500,12 +500,12 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 .ws-dlg-label{font-size:11px;font-weight:600;color:var(--tx3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px}
 #ws-dlg-input{width:100%;min-height:80px;max-height:160px;resize:vertical;padding:10px 12px;border:1px solid var(--bdr2);border-radius:10px;background:var(--bg);color:var(--tx);font-size:13px;font-family:inherit;line-height:1.5}
 #ws-dlg-input:focus{outline:none;border-color:var(--acc)}
-.ws-dlg-opt-row{display:flex;align-items:center;gap:8px}
-#ws-dlg-opt-status{font-size:11px;color:var(--tx3);font-style:italic;flex:1}
-#ws-dlg-optimized-wrap{display:none;flex-direction:column;gap:4px}
-#ws-dlg-optimized{width:100%;padding:9px 12px;border:1.5px solid var(--grn);border-radius:10px;background:rgba(107,125,82,.06);color:var(--tx);font-size:13px;font-family:inherit;line-height:1.5;resize:none;min-height:56px}
-#ws-dlg-optimized:focus{outline:none;border-color:var(--acc)}
-.ws-opt-badge{font-size:10px;color:var(--grn);font-weight:600;letter-spacing:.3px}
+
+
+
+
+
+
 .ws-dlg-cost-note{font-size:10px;color:var(--tx3);font-style:italic}
 .ws-dlg-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .ws-dlg-footer-actions{display:flex;gap:8px}
@@ -903,23 +903,10 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
       <textarea id="ws-dlg-input" placeholder="e.g. What AI chips does NVIDIA sell? Who are their competitors? What's their stock price?"></textarea>
     </div>
 
-    <div class="ws-dlg-opt-row">
-      <span id="ws-dlg-opt-status"></span>
-      <button class="btn btn-g" id="ws-dlg-opt-btn" onclick="optimizeWsQuery()" style="font-size:12px;padding:6px 14px">✨ Optimize Query</button>
-    </div>
-
-    <div id="ws-dlg-optimized-wrap">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span class="ws-dlg-label" style="margin-bottom:0">Optimized Query</span>
-        <span class="ws-opt-badge">✅ AI optimized · editable</span>
-      </div>
-      <textarea id="ws-dlg-optimized" rows="2"></textarea>
-    </div>
-
     <div>
-      <input id="ws-dlg-apikey" type="password" placeholder="Jina API key" autocomplete="off" spellcheck="false"
+      <input id="ws-dlg-apikey" type="text" placeholder="Jina API key" autocomplete="new-password" spellcheck="false"
         oninput="CFG.jinaApiKey=this.value.trim();saveCfg()"
-        style="width:100%;padding:4px 8px;border:1px solid var(--bdr2);border-radius:6px;background:var(--bg);color:var(--tx);font-size:11px;font-family:inherit">
+        style="width:100%;padding:4px 8px;border:1px solid var(--bdr2);border-radius:6px;background:var(--bg);color:var(--tx);font-size:11px;font-family:inherit;-webkit-text-security:disc">
       <div style="font-size:9px;color:var(--tx3);margin-top:3px">Don't have one? Message Bearl privately for API access.</div>
     </div>
 
@@ -1225,7 +1212,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.77';
+const APP_VERSION = 'v4.78';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -2372,10 +2359,10 @@ function saveSettings(){
 // ══ WEB SEARCH DIALOG ══
 function openWsDialog(){
   document.getElementById('ws-dlg-input').value='';
-  document.getElementById('ws-dlg-optimized').value='';
-  document.getElementById('ws-dlg-opt-status').textContent='';
-  document.getElementById('ws-dlg-optimized-wrap').style.display='none';
-  document.getElementById('ws-dlg-opt-btn').disabled=false;
+
+
+
+
   document.getElementById('ws-dlg-search-btn').disabled=false;
   document.getElementById('ws-dlg-apikey').value=CFG.jinaApiKey||'';
   document.getElementById('ws-dialog').classList.add('open');
@@ -2383,41 +2370,6 @@ function openWsDialog(){
 }
 function closeWsDialog(){
   document.getElementById('ws-dialog').classList.remove('open');
-}
-async function optimizeWsQuery(){
-  const raw=document.getElementById('ws-dlg-input').value.trim();
-  if(!raw){showToast('⚠️ Enter your question first');return;}
-  if(!CFG.apiKey){showToast('⚠️ API key not set');return;}
-  const btn=document.getElementById('ws-dlg-opt-btn');
-  const status=document.getElementById('ws-dlg-opt-status');
-  btn.disabled=true;status.textContent='✨ Optimizing…';
-  try{
-    const res=await fetch(OAI_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+CFG.apiKey},
-      body:JSON.stringify({
-        model:CFG.model,
-        max_tokens:120,
-        stream:false,
-        messages:[
-          {role:'system',content:'You are a search query optimizer. Convert the user\'s question(s) into ONE highly effective web search query.\n\nRules:\n- Combine multiple questions into one comprehensive query\n- Be specific with dates, names, numbers\n- Use concise search-engine-friendly keywords\n- Add current year if time-sensitive\n- Output ONLY the optimized query — no explanation, no quotes'},
-          {role:'user',content:raw}
-        ]
-      })
-    });
-    if(!res.ok)throw new Error(`${res.status}`);
-    const data=await res.json();
-    const optimized=(data.choices?.[0]?.message?.content||'').trim();
-    if(!optimized)throw new Error('Empty response');
-    document.getElementById('ws-dlg-optimized').value=optimized;
-    document.getElementById('ws-dlg-optimized-wrap').style.display='flex';
-    status.textContent='';
-  }catch(e){
-    status.textContent='❌ Optimize failed — you can type manually below';
-    document.getElementById('ws-dlg-optimized').value=raw;
-    document.getElementById('ws-dlg-optimized-wrap').style.display='flex';
-  }
-  btn.disabled=false;
 }
 async function executeWsSearch(){
   if(!CFG.apiKey){showToast('⚠️ API key not set in Settings → Config');return;}
