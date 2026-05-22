@@ -903,15 +903,8 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
       <textarea id="ws-dlg-input" placeholder="e.g. What AI chips does NVIDIA sell? Who are their competitors? What's their stock price?"></textarea>
     </div>
 
-    <div>
-      <input id="ws-dlg-apikey" type="text" placeholder="Jina API key" autocomplete="new-password" spellcheck="false"
-        oninput="CFG.jinaApiKey=this.value.trim();saveCfg()"
-        style="width:100%;padding:4px 8px;border:1px solid var(--bdr2);border-radius:6px;background:var(--bg);color:var(--tx);font-size:11px;font-family:inherit;-webkit-text-security:disc">
-      <div style="font-size:9px;color:var(--tx3);margin-top:3px">Don't have one? Message Bearl privately for API access.</div>
-    </div>
-
     <div class="ws-dlg-footer">
-      <div class="ws-dlg-cost-note">Free · Powered by Jina AI</div>
+      <div class="ws-dlg-cost-note">$0.005/search · MiMo Web Search</div>
       <div class="ws-dlg-footer-actions">
         <button class="btn btn-g" onclick="closeWsDialog()">Cancel</button>
         <button class="btn btn-p" id="ws-dlg-search-btn" onclick="executeWsSearch()" style="display:flex;align-items:center;gap:5px"><img src="data:image/png;base64,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" width="16" height="16" style="display:block"> Search</button>
@@ -1212,7 +1205,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.81';
+const APP_VERSION = 'v4.82';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1228,7 +1221,7 @@ const TTS_VOICES = [
   {id:'Milo',label:'Milo (English Male)',lang:'en'},
   {id:'Dean',label:'Dean (English Male)',lang:'en'},
 ];
-let CFG = { model: 'mimo-v2.5-pro', systemPrompt: '', apiKey: '', ttsVoiceEn: '', ttsVoiceZh: '', webSearch: false, wsApiKey: '', wsMode: 'simple', defaultCurrency: '', jinaApiKey: '' };
+let CFG = { model: 'mimo-v2.5-pro', systemPrompt: '', apiKey: '', ttsVoiceEn: '', ttsVoiceZh: '', webSearch: false, wsApiKey: '', wsMode: 'simple', defaultCurrency: '' };
 const WS_MODES={
   simple:{max_keyword:1,limit:2,label:'Simple'},
   pro:   {max_keyword:2,limit:3,label:'Pro'},
@@ -2364,7 +2357,6 @@ function openWsDialog(){
 
 
   document.getElementById('ws-dlg-search-btn').disabled=false;
-  document.getElementById('ws-dlg-apikey').value=CFG.jinaApiKey||'';
   document.getElementById('ws-dialog').classList.add('open');
   setTimeout(()=>document.getElementById('ws-dlg-input').focus(),80);
 }
@@ -2372,11 +2364,7 @@ function closeWsDialog(){
   document.getElementById('ws-dialog').classList.remove('open');
 }
 async function executeWsSearch(){
-  if(!CFG.apiKey){showToast('⚠️ API key not set in Settings → Config');return;}
-  const jinaKey=document.getElementById('ws-dlg-apikey').value.trim();
-  if(!jinaKey){showToast('⚠️ Enter your Jina API key');return;}
-  // Save key for convenience next time
-  CFG.jinaApiKey=jinaKey;saveCfg();
+  if(!CFG.wsApiKey){showToast('⚠️ Web Search API key not set in Settings → Config');return;}
   const query=(document.getElementById('ws-dlg-input')?.value||'').trim();
   if(!query){showToast('⚠️ Enter a search query');return;}
   closeWsDialog();
@@ -2390,7 +2378,7 @@ async function executeWsSearch(){
   const conv=db.convs.find(c=>c.id===curId);
   if(!conv)return;
   // Add the search as a user message
-  const userMsg={role:'user',text:`🔍 ${query}`,ts:Date.now()};
+  const userMsg={role:'user',text:`🌐 ${query}`,ts:Date.now()};
   conv.msgs.push(userMsg);
   save();renderMsgs();
   if(streaming){abortCtrl?.abort();streaming=false;}
@@ -2398,58 +2386,20 @@ async function executeWsSearch(){
   document.getElementById('send-btn').style.display='none';
   document.getElementById('stop-btn').style.display='flex';
   streaming=true;abortCtrl=new AbortController();
-  let acc='';
-
-  // ── Step 1: Fetch search results from Jina AI (free) ──
-  asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">🔍 Searching via Jina AI…</em><span class="cursor"></span>`;
-  let searchResults='';
-  try{
-    const jinaRes=await fetch(`https://s.jina.ai/${encodeURIComponent(query)}?count=3`,{
-      headers:{
-        'Accept':'text/plain',
-        'X-Return-Format':'markdown',
-        'Authorization':'Bearer '+jinaKey,
-        'X-Retain-Images':'none',
-        'X-With-Links-Summary':'false'
-      },
-      signal:AbortSignal.timeout(20000)
-    });
-    if(!jinaRes.ok)throw new Error(`Jina ${jinaRes.status}`);
-    searchResults=await jinaRes.text();
-  }catch(e){
-    if(e.name==='AbortError'||e.name==='TimeoutError'){
-      asstEl.innerHTML=`<span style="color:var(--red)">⚠️ Search timed out. Try again.</span>`;
-    }else{
-      asstEl.innerHTML=`<span style="color:var(--red)">⚠️ Jina search failed: ${esc(e.message)}</span>`;
-    }
-    streaming=false;abortCtrl=null;
-    document.getElementById('send-btn').style.display='flex';
-    document.getElementById('stop-btn').style.display='none';
-    return;
-  }
-
-  // ── Step 2: Ask MiMo AI to synthesize the results ──
-  asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">✍️ Synthesizing results…</em><span class="cursor"></span>`;
+  let acc='',wsAnnotations=[];
+  asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">🔍 Searching…</em><span class="cursor"></span>`;
   try{
     const sp=((CFG.systemPrompt||'')+getCurrentTimestamp()+getCurrencyNote()).trim();
-    // Smart extraction: up to 2500 chars from each result block (not a blind front-slice)
-    const jinaSnippets=(txt=>{
-      const blocks=txt.split(/\n(?=\[\d+\] Title:)/);
-      return blocks.slice(0,3).map(b=>b.slice(0,2500).trim()).join('\n\n---\n\n');
-    })(searchResults);
-    // Web search synthesis: standalone — no prior context (prevents token overflow on repeat searches)
-    const synthMsg={
-      role:'user',
-      content:`Web search results for: "${query}"\n\n${jinaSnippets}\n\n---\nUsing the search results above, please answer: ${query}`
-    };
-    const res=await fetch(OAI_URL,{
+    const msgs=buildOAI(conv.msgs,sp);
+    const res=await fetch(WS_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+CFG.apiKey},
+      headers:{'Content-Type':'application/json','api-key':CFG.wsApiKey},
       body:JSON.stringify({
         model:CFG.model,
         max_tokens:8192,
         stream:true,
-        messages:[...(sp?[{role:'system',content:sp}]:[]),synthMsg]
+        messages:msgs,
+        tools:[{type:'web_search',max_keyword:1,force_search:true}]
       }),
       signal:abortCtrl.signal
     });
@@ -2463,6 +2413,8 @@ async function executeWsSearch(){
         const d=line.slice(6).trim();if(d==='[DONE]')break;
         try{
           const p=JSON.parse(d);
+          const annots=p.choices?.[0]?.delta?.annotations;
+          if(annots?.length)wsAnnotations.push(...annots);
           const delta=p.choices?.[0]?.delta?.content||'';
           if(delta){acc+=delta;renderMD(asstEl,acc);document.getElementById('msgs').scrollTop=9e9;}
         }catch(e){}
@@ -2471,7 +2423,7 @@ async function executeWsSearch(){
     if(!acc)throw new Error('Empty response');
   }catch(e){
     if(e.name!=='AbortError'){
-      asstEl.innerHTML=`<span style="color:var(--red)">⚠️ AI synthesis failed: ${esc(e.message)}</span>`;
+      asstEl.innerHTML=`<span style="color:var(--red)">⚠️ Search failed: ${esc(e.message)}</span>`;
     }
     streaming=false;abortCtrl=null;
     document.getElementById('send-btn').style.display='flex';
@@ -2479,7 +2431,8 @@ async function executeWsSearch(){
     return;
   }
   renderMD(asstEl,acc);
-  const asstMsg={role:'assistant',text:acc,ts:Date.now()};
+  if(wsAnnotations.length){const srcEl=document.createElement('div');srcEl.className='ws-sources';srcEl.innerHTML=renderAnnotations(wsAnnotations);asstEl.appendChild(srcEl);}
+  const asstMsg={role:'assistant',text:acc,ts:Date.now(),annotations:wsAnnotations.length?[...wsAnnotations]:undefined};
   conv.msgs.push(asstMsg);save();updateHdrSub();
   streaming=false;abortCtrl=null;
   document.getElementById('send-btn').style.display='flex';
@@ -3746,8 +3699,7 @@ function getCfgToSync() {
     ttsVoiceEn:      CFG.ttsVoiceEn,
     ttsVoiceZh:      CFG.ttsVoiceZh,
     webSearch:       CFG.webSearch,
-    wsMode:          CFG.wsMode,
-    jinaApiKey:      CFG.jinaApiKey
+    wsMode:          CFG.wsMode
   };
 }
 function applyCfgFromCloud(r) {
@@ -3759,7 +3711,6 @@ function applyCfgFromCloud(r) {
   if (r.ttsVoiceZh !== undefined)     CFG.ttsVoiceZh      = r.ttsVoiceZh;
   if (r.webSearch !== undefined)      CFG.webSearch       = r.webSearch;
   if (r.wsMode)                       CFG.wsMode          = r.wsMode;
-  if (r.jinaApiKey)                   CFG.jinaApiKey      = r.jinaApiKey;
   try { localStorage.setItem('mimo_web_cfg', JSON.stringify(CFG)); } catch(e){}
 }
 
