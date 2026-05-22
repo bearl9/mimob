@@ -932,7 +932,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
     <h2>🌐 Browse a Webpage</h2>
     <p class="modal-sub">Fetch any URL and attach its content to your message</p>
     <div class="fg"><label class="fl">URL</label>
-      <input class="fi" id="browse-url" placeholder="https://example.com" onkeydown="if(event.key==='Enter')fetchURL()">
+      <input class="fi" id="browse-url" placeholder="https://example.com" onkeydown="if(event.key==='Enter')fetchURL()" autocomplete="off" spellcheck="false">
     </div>
     <div id="browse-status" style="font-size:13px;color:var(--tx2);min-height:20px;margin-bottom:6px"></div>
     <div class="ma">
@@ -1224,7 +1224,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.64';
+const APP_VERSION = 'v4.65';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
