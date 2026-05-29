@@ -955,7 +955,13 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
         </div>
       </div>
       <div class="fg"><label class="fl">Model</label>
-        <input class="fi" id="model-in" value="mimo-v2.5-pro" autocomplete="off" spellcheck="false">
+        <select class="fi" id="model-in" style="cursor:pointer">
+          <option value="mimo-v2.5-pro">mimo-v2.5-pro — Flagship</option>
+          <option value="mimo-v2.5">mimo-v2.5 — Multimodal</option>
+          <option value="mimo-v2-flash">mimo-v2-flash — Fast &amp; Cheap</option>
+          <option value="mimo-v2-pro">mimo-v2-pro (Legacy)</option>
+          <option value="mimo-v2-omni">mimo-v2-omni (Legacy)</option>
+        </select>
       </div>
       <div class="fg">
         <label class="fl">💰 Default Currency
@@ -1212,7 +1218,10 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.91';
+const APP_VERSION = 'v4.92';
+const CREDIT_RATES={'mimo-v2.5-pro':{i:300,o:600},'mimo-v2.5':{i:100,o:200},'mimo-v2-pro':{i:700,o:2100},'mimo-v2-omni':{i:280,o:1400},'mimo-v2-flash':{i:10,o:30}};
+function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['mimo-v2.5-pro'];return inTok*r.i+outTok*r.o;}
+function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1600,7 +1609,7 @@ function appendDOM(msg, isStreaming=false, msgIdx=-1) {
   // Action bar
   if(msg.role==='assistant'&&msgIdx>=0){
     const bar=document.createElement('div');bar.className='msg-action-bar';
-    const tokStr2=msg.tokens?`${msg.tokens.toLocaleString()} tokens`:'';
+    const tokStr2=msg.tokens?msg.tokens+' tok'+(msg.credits?' · ~'+fmtCredits(msg.credits):''):'';
     const timeStr2=fmtTime(msg.ts);
     bar.innerHTML=`<span class="mab-time">${timeStr2}</span>
       ${tokStr2?`<span class="mab-sep">·</span><span class="mab-tokens">${tokStr2}</span>`:''}
@@ -1864,10 +1873,10 @@ async function send() {
   document.getElementById('stop-btn').style.display='flex';
   streaming=true; abortCtrl=new AbortController();
   const activeModel = pickModel(conv.msgs);
-  let acc='', attempt=0, lastErr='', reqTokens=0;
+  let acc='', attempt=0, lastErr='', reqTokens=0, reqInputTok=0, reqOutputTok=0;
 
   const tryStream = async () => {
-    attempt++; acc=''; reqTokens=0;
+    attempt++; acc=''; reqTokens=0; reqInputTok=0; reqOutputTok=0;
     const sp=((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()).trim();
     const hasAudio=conv.msgs.some(m=>(m.audioInputs||[]).length>0);
     if(attempt===1){
@@ -1908,7 +1917,7 @@ async function send() {
             reqTokens+=(p.message.usage.input_tokens||0)+(p.message.usage.output_tokens||0);
           }
           if(p.type==='message_delta'&&p.usage){
-            reqTokens+=(p.usage.input_tokens||0)+(p.usage.output_tokens||0);
+            reqInputTok+=(p.usage.input_tokens||0);reqOutputTok+=(p.usage.output_tokens||0);reqTokens=reqInputTok+reqOutputTok;
           }
           const annots=p.choices?.[0]?.delta?.annotations;
           if(annots&&annots.length)wsAnnotations.push(...annots);
@@ -1932,9 +1941,10 @@ async function send() {
     }
     // Add tokens to global counter
     if(reqTokens>0){ db.totalTokens=(db.totalTokens||0)+reqTokens; save(); updateTokenBar(); }
+    const reqCredits=reqTokens>0?calcCredits(reqInputTok,reqOutputTok,activeModel):0;
     renderMD(asstEl, acc);
     if(wsAnnotations.length){const srcEl=document.createElement('div');srcEl.className='ws-sources';srcEl.innerHTML=renderAnnotations(wsAnnotations);asstEl.appendChild(srcEl);}
-    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:reqTokens||undefined,annotations:wsAnnotations.length?[...wsAnnotations]:undefined};
+    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:reqTokens||undefined,credits:reqCredits||undefined,annotations:wsAnnotations.length?[...wsAnnotations]:undefined};
     conv.msgs.push(asstMsg); save();
     const newIdx=conv.msgs.length-1;
     const wrap=asstEl.closest('.msg-group');
@@ -1943,7 +1953,7 @@ async function send() {
       wrapBlocks(asstEl, newIdx, []);
       updateHdrSub();
       const bar=wrap.querySelector('.msg-action-bar');
-      const tokStr3=reqTokens?`${reqTokens.toLocaleString()} tokens`:'';
+      const tokStr3=reqTokens?reqTokens+' tok'+(reqCredits?' · ~'+fmtCredits(reqCredits):''):'';
       if(bar)bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
         ${tokStr3?`<span class="mab-sep">·</span><span class="mab-tokens">${tokStr3}</span>`:''}
         <span class="mab-sep">·</span>
@@ -3491,9 +3501,9 @@ async function regenMsg(msgIdx){
   document.getElementById('stop-btn').style.display='flex';
   streaming=true;abortCtrl=new AbortController();
   const activeModel=pickModel(conv.msgs);
-  let acc='',attempt=0,lastErr='',reqTokens=0;
+  let acc='',attempt=0,lastErr='',reqTokens=0,reqInputTok=0,reqOutputTok=0;
   const tryRegen=async()=>{
-    attempt++;acc='';reqTokens=0;
+    attempt++;acc='';reqTokens=0;reqInputTok=0;reqOutputTok=0;
     const sp=((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()).trim();
     const hasAudio=conv.msgs.some(m=>(m.audioInputs||[]).length>0);
     asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">↺ ${activeModel} (regen)</em><span class="cursor"></span>`;
@@ -3521,7 +3531,7 @@ async function regenMsg(msgIdx){
         try{
           const p=JSON.parse(d);
           if(p.type==='message_start'&&p.message?.usage){reqTokens+=(p.message.usage.input_tokens||0)+(p.message.usage.output_tokens||0);}
-          if(p.type==='message_delta'&&p.usage){reqTokens+=(p.usage.input_tokens||0)+(p.usage.output_tokens||0);}
+          if(p.type==='message_delta'&&p.usage){reqInputTok+=(p.usage.input_tokens||0);reqOutputTok+=(p.usage.output_tokens||0);reqTokens=reqInputTok+reqOutputTok;}
           const annots=p.choices?.[0]?.delta?.annotations;if(annots?.length)wsAnnotations.push(...annots);
           const delta=p.delta?.text||p.delta?.content||p.choices?.[0]?.delta?.content||'';
           if(delta){acc+=delta;renderMD(asstEl,acc);document.getElementById('msgs').scrollTop=9e9;}
@@ -3534,16 +3544,17 @@ async function regenMsg(msgIdx){
     let ok=false;
     while(attempt<3&&!ok){try{await tryRegen();ok=true;}catch(e){if(e.name==='AbortError')throw e;if(attempt>=3)throw e;await new Promise(r=>setTimeout(r,1000*attempt));}}
     if(reqTokens>0){db.totalTokens=(db.totalTokens||0)+reqTokens;save();updateTokenBar();}
+    const reqCredits=reqTokens>0?calcCredits(reqInputTok,reqOutputTok,activeModel):0;
     renderMD(asstEl,acc);
     if(wsAnnotations.length){const srcEl=document.createElement('div');srcEl.className='ws-sources';srcEl.innerHTML=renderAnnotations(wsAnnotations);asstEl.appendChild(srcEl);}
-    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:reqTokens||undefined,annotations:wsAnnotations.length?[...wsAnnotations]:undefined};
+    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:reqTokens||undefined,credits:reqCredits||undefined,annotations:wsAnnotations.length?[...wsAnnotations]:undefined};
     conv.msgs.push(asstMsg);save();updateHdrSub();
     const newIdx=conv.msgs.length-1;
     const wrap=asstEl.closest('.msg-group');
     if(wrap){
       wrap.dataset.idx=newIdx;wrapBlocks(asstEl,newIdx,[]);
       const bar=wrap.querySelector('.msg-action-bar');
-      const tokStr4=reqTokens?`${reqTokens.toLocaleString()} tokens`:'';
+      const tokStr4=reqTokens?reqTokens+' tok'+(reqCredits?' · ~'+fmtCredits(reqCredits):''):'';
       if(bar)bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
         ${tokStr4?`<span class="mab-sep">·</span><span class="mab-tokens">${tokStr4}</span>`:''}
         <span class="mab-sep">·</span>
