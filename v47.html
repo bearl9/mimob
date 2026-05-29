@@ -1218,7 +1218,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.94';
+const APP_VERSION = 'v4.95';
 const CREDIT_RATES={'mimo-v2.5-pro':{i:300,o:600},'mimo-v2.5':{i:100,o:200},'mimo-v2-pro':{i:700,o:2100},'mimo-v2-omni':{i:280,o:1400},'mimo-v2-flash':{i:10,o:30}};
 function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['mimo-v2.5-pro'];return inTok*r.i+outTok*r.o;}
 function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
@@ -1952,9 +1952,10 @@ async function send() {
       wrap.dataset.idx=newIdx;
       wrapBlocks(asstEl, newIdx, []);
       updateHdrSub();
-      const bar=wrap.querySelector('.msg-action-bar');
+      let bar=wrap.querySelector('.msg-action-bar');
+      if(!bar){bar=document.createElement('div');bar.className='msg-action-bar';wrap.appendChild(bar);}
       const tokStr3=reqTokens?reqTokens+' tok'+(reqCredits?' · ~'+fmtCredits(reqCredits):''):'';
-      if(bar)bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
+      bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
         ${tokStr3?`<span class="mab-sep">·</span><span class="mab-tokens">${tokStr3}</span>`:''}
         <span class="mab-sep">·</span>
         <button class="mab-btn" id="mab-pin-${newIdx}" onclick="toggleBookmark(${newIdx},event)" title="Pin to context">★ pin</button>
@@ -3572,9 +3573,10 @@ async function regenMsg(msgIdx){
     const wrap=asstEl.closest('.msg-group');
     if(wrap){
       wrap.dataset.idx=newIdx;wrapBlocks(asstEl,newIdx,[]);
-      const bar=wrap.querySelector('.msg-action-bar');
+      let bar=wrap.querySelector('.msg-action-bar');
+      if(!bar){bar=document.createElement('div');bar.className='msg-action-bar';wrap.appendChild(bar);}
       const tokStr4=reqTokens?reqTokens+' tok'+(reqCredits?' · ~'+fmtCredits(reqCredits):''):'';
-      if(bar)bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
+      bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
         ${tokStr4?`<span class="mab-sep">·</span><span class="mab-tokens">${tokStr4}</span>`:''}
         <span class="mab-sep">·</span>
         <button class="mab-btn" id="mab-pin-${newIdx}" onclick="toggleBookmark(${newIdx},event)" title="Pin">★ pin</button>
