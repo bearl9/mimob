@@ -174,11 +174,8 @@
 .block-wrap:hover .block-bm-btn,.block-wrap:hover .block-play-btn{opacity:1;border-color:var(--bdr2)}
 .block-bm-btn.bm-active{opacity:1!important;color:var(--gold)!important;border-color:rgba(201,132,38,.35)!important;background:rgba(201,132,38,.08)!important}
 .block-play-btn.blk-playing{opacity:1!important;color:var(--acc)!important}
-.block-tok{font-size:9px;color:var(--tx3);margin-top:4px;flex-shrink:0;white-space:nowrap;opacity:0;transition:opacity .1s;padding:0 2px}
-.block-wrap:hover .block-tok{opacity:1}
-.block-wrap.blk-bm .block-tok{opacity:1}
-.block-wrap > :not(.block-bm-btn):not(.block-play-btn):not(.block-tok){flex:1;min-width:0}
-.block-wrap.blk-bm > :not(.block-bm-btn):not(.block-play-btn):not(.block-tok){border-left:2px solid var(--gold);padding-left:8px;background:rgba(201,132,38,.04);border-radius:0 4px 4px 0}
+.block-wrap:hover .block-wrap.blk-bm .block-wrap > :not(.block-bm-btn):not(.block-play-btn){flex:1;min-width:0}
+.block-wrap.blk-bm > :not(.block-bm-btn):not(.block-play-btn){border-left:2px solid var(--gold);padding-left:8px;background:rgba(201,132,38,.04);border-radius:0 4px 4px 0}
 
 /* ── SELECTION TOOLBAR ── */
 #sel-toolbar{position:fixed;background:var(--sur2);border:1px solid var(--bdr2);border-radius:var(--r2);padding:3px 4px;gap:2px;z-index:999;box-shadow:rgba(120,60,30,.2) 0 4px 16px -4px;display:none;pointer-events:all}
@@ -1215,7 +1212,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v4.90';
+const APP_VERSION = 'v4.91';
 const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
 const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
 const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
@@ -1647,12 +1644,8 @@ function wrapBlocks(el, msgIdx, existingSnippets) {
     plBtn.textContent = '▶';
     plBtn.title = 'Play this block';
     plBtn.onclick = ev => { ev.stopPropagation(); playBlockTTS(text, plBtn); };
-    // token count badge
-    const tokSpan = document.createElement('span');
-    tokSpan.className = 'block-tok';
-    tokSpan.textContent = '~' + Math.ceil(text.length / 4) + ' tok';
     child.parentNode.insertBefore(bwrap, child);
-    bwrap.appendChild(bmBtn); bwrap.appendChild(plBtn); bwrap.appendChild(tokSpan); bwrap.appendChild(child);
+    bwrap.appendChild(bmBtn); bwrap.appendChild(plBtn); bwrap.appendChild(child);
   });
 }
 
