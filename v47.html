@@ -471,6 +471,10 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 #hdr-sub{display:none}
 .hdr-btn{width:40px;height:40px;background:none;border:none;color:var(--tx2);font-size:20px;cursor:pointer;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hdr-btn:active{background:var(--sur2)}
+.gen-img-wrap{margin-top:8px}
+.gen-img-loading{font-size:12px;color:var(--tx3);font-style:italic;padding:8px 0}
+.gen-img{max-width:100%;border-radius:10px;display:none;cursor:pointer}
+.gen-img.loaded{display:block}
 #sb-bulk-btn{background:none;border:none;cursor:pointer;color:var(--tx3);font-size:16px;padding:4px 6px;border-radius:6px;flex-shrink:0;line-height:1}
 #sb-bulk-btn:active,#sb-bulk-btn.bulk-active{color:var(--red);background:rgba(180,83,58,.12)}
 #bulk-bar{display:none;position:sticky;bottom:0;background:var(--sur2);border-top:1px solid var(--bdr2);padding:8px 10px;gap:8px;align-items:center;flex-shrink:0}
@@ -1222,7 +1226,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v5.05';
+const APP_VERSION = 'v5.06';
 const CREDIT_RATES={'mimo-v2.5-pro':{i:300,o:600},'mimo-v2.5':{i:100,o:200},'mimo-v2-pro':{i:700,o:2100},'mimo-v2-omni':{i:280,o:1400}};
 function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['mimo-v2.5-pro'];return inTok*r.i+outTok*r.o;}
 function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
@@ -1637,6 +1641,7 @@ function appendDOM(msg, isStreaming=false, msgIdx=-1) {
     renderMD(content, msg.text);
     if(msg.annotations&&msg.annotations.length){const srcEl2=document.createElement('div');srcEl2.className='ws-sources';srcEl2.innerHTML=renderAnnotations(msg.annotations);content.appendChild(srcEl2);}
     if (msgIdx>=0) wrapBlocks(content, msgIdx, msg.snippets||[]);
+    if(msg.imageUrl) injectImageIntoEl(content, msg.imageUrl, msg.imagePrompt||'');
   }
   body.appendChild(content);
   head.appendChild(av); head.appendChild(body); wrap.appendChild(head);
@@ -1902,6 +1907,14 @@ async function send() {
   inputEl.value=''; inputEl.style.height='auto';
   atts=[]; document.getElementById('att-preview').innerHTML='';
 
+  // Option A: /image or draw: command → direct Pollinations, skip MiMo
+  const _imgCmd=text.match(/^\/image\s+(.+)|^draw:\s*(.+)/i);
+  if(_imgCmd){
+    const _imgPrompt=(_imgCmd[1]||_imgCmd[2]).trim();
+    await sendImageRequest(_imgPrompt, conv);
+    return;
+  }
+
   // Use Firebase background mode if user is signed in and no audio attachments
   const _hasAudioNow=conv.msgs.some(m=>(m.audioInputs||[]).length>0);
   if(fbUser && !_hasAudioNow){
@@ -1925,7 +1938,7 @@ async function send() {
 
   const tryStream = async () => {
     attempt++; acc=''; reqTokens=0; reqInputTok=0; reqOutputTok=0;
-    const sp=((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()).trim();
+    const sp=((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()+getImageInstruction()).trim();
     if(attempt>1){
       asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">Retrying… (${attempt}/3)</em><span class="cursor"></span>`;
     }
@@ -1961,6 +1974,8 @@ async function send() {
     }
     reqTokens=reqInputTok+reqOutputTok;
     if(!acc){lastErr='Empty response from server';throw new Error(lastErr);}
+    const _imgExtSend=extractImagePrompt(acc);acc=_imgExtSend.text;
+    const _imgPromptSend=_imgExtSend.imagePrompt;const _imgUrlSend=_imgExtSend.imageUrl;
   };
 
   try {
@@ -1978,7 +1993,8 @@ async function send() {
     const reqCredits=reqTokens>0?calcCredits(reqInputTok,reqOutputTok,activeModel):0;
     renderMD(asstEl, acc);
     if(wsAnnotations.length){const srcEl=document.createElement('div');srcEl.className='ws-sources';srcEl.innerHTML=renderAnnotations(wsAnnotations);asstEl.appendChild(srcEl);}
-    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:reqTokens||undefined,credits:reqCredits||undefined,annotations:wsAnnotations.length?[...wsAnnotations]:undefined};
+    if(_imgUrlSend)injectImageIntoEl(asstEl,_imgUrlSend,_imgPromptSend);
+    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:reqTokens||undefined,credits:reqCredits||undefined,annotations:wsAnnotations.length?[...wsAnnotations]:undefined,imagePrompt:_imgPromptSend||undefined,imageUrl:_imgUrlSend||undefined};
     conv.msgs.push(asstMsg); save();
     const newIdx=conv.msgs.length-1;
     const wrap=asstEl.closest('.msg-group');
@@ -2035,7 +2051,7 @@ const _activeJobWatches = new Set();
 
 async function sendBackground(conv) {
   const snippetsCtx = buildSnippetsContext(conv.msgs);
-  const sp = ((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()).trim();
+  const sp = ((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()+getImageInstruction()).trim();
   const activeModel = pickModel(conv.msgs);
 
   const asstEl = appendDOM({role:'assistant',text:'',ts:Date.now()},true,-1);
@@ -2104,9 +2120,11 @@ function _applyJobResult(job, jobId, conv, msgIdx) {
   if(job.status === 'done') {
     const tokens  = (job.inputTokens||0)+(job.outputTokens||0);
     const credits = calcCredits(job.inputTokens||0, job.outputTokens||0, job.model||CFG.model);
+    const _imgExtBg=extractImagePrompt(job.response);
     conv.msgs[msgIdx] = {
-      role:'assistant', text:job.response, ts:Date.now(),
-      tokens:tokens||undefined, credits:credits||undefined
+      role:'assistant', text:_imgExtBg.text, ts:Date.now(),
+      tokens:tokens||undefined, credits:credits||undefined,
+      imagePrompt:_imgExtBg.imagePrompt||undefined, imageUrl:_imgExtBg.imageUrl||undefined
     };
     db.totalTokens = (db.totalTokens||0) + tokens;
   } else {
@@ -2164,6 +2182,54 @@ function watchPendingJobs() {
       if(changed){ save(); if(curId) renderMsgs(); }
     } catch(e){}
   }, 10000);
+}
+
+
+// ══ IMAGE GENERATION (Pollinations.AI) ══
+function buildImageUrl(prompt){
+  const seed=Math.floor(Math.random()*999999);
+  return 'https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)
+    +'?width=1024&height=1024&model=flux&nologo=true&seed='+seed;
+}
+function extractImagePrompt(text){
+  const m=text.match(/\[IMAGE:\s*([^\]]+)\]/i);
+  if(!m)return{text,imagePrompt:null,imageUrl:null};
+  const imagePrompt=m[1].trim();
+  return{text:text.replace(/\[IMAGE:\s*[^\]]+\]/i,'').trim(),imagePrompt,imageUrl:buildImageUrl(imagePrompt)};
+}
+function injectImageIntoEl(el,imageUrl,imagePrompt){
+  const wrap=document.createElement('div');wrap.className='gen-img-wrap';
+  const loading=document.createElement('div');loading.className='gen-img-loading';
+  loading.textContent='🎨 Generating image…';
+  const img=document.createElement('img');img.className='gen-img';
+  img.alt=imagePrompt||'generated image';img.src=imageUrl;
+  img.onload=()=>{loading.style.display='none';img.classList.add('loaded');};
+  img.onerror=()=>{loading.textContent='⚠️ Image generation failed. Try again.';};
+  img.onclick=()=>{document.getElementById('lb-img').src=img.src;document.getElementById('lb').classList.add('open');};
+  wrap.appendChild(loading);wrap.appendChild(img);el.appendChild(wrap);
+}
+function getImageInstruction(){
+  return '\n\nYou have image generation capability. When the user asks you to generate, draw, create, or visualize any image, include `[IMAGE: detailed English prompt]` on its own line in your response, then your normal reply. Make the prompt descriptive for best results. Do NOT include [IMAGE:...] unless the user is asking for an image.';
+}
+async function sendImageRequest(prompt, conv){
+  // Option A: direct /image or draw: command — skip MiMo, go straight to Pollinations
+  const imageUrl = buildImageUrl(prompt);
+  const asstEl = appendDOM({role:'assistant',text:'',ts:Date.now()},true,-1);
+  asstEl.innerHTML = '<em style="color:var(--tx3);font-size:11px">🎨 Generating image…</em>';
+  document.getElementById('msgs').scrollTop=9e9;
+  const newIdx = conv.msgs.length;
+  const asstMsg = {role:'assistant',text:'',ts:Date.now(),imagePrompt:prompt,imageUrl};
+  conv.msgs.push(asstMsg); save();
+  const wrap=asstEl.closest('.msg-group');
+  if(wrap){
+    wrap.dataset.idx=newIdx;
+    let bar=wrap.querySelector('.msg-action-bar');
+    if(!bar){bar=document.createElement('div');bar.className='msg-action-bar';wrap.appendChild(bar);}
+    bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
+      <span class="mab-sep">·</span>
+      <button class="mab-btn" onclick="copyMsgText(this,${newIdx})" title="Copy">📋 copy</button>`;
+  }
+  injectImageIntoEl(asstEl, imageUrl, prompt);
 }
 
 function stopStream(){abortCtrl?.abort();}
@@ -3701,7 +3767,7 @@ async function regenMsg(msgIdx){
   },1000);
   const tryRegen=async()=>{
     attempt++;acc='';reqTokens=0;reqInputTok=0;reqOutputTok=0;
-    const sp=((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()).trim();
+    const sp=((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()+getImageInstruction()).trim();
     if(attempt>1){asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">Retrying… (${attempt}/3)</em><span class="cursor"></span>`;}
     wsAnnotations=[];
     const useOAI=hasAudio;
