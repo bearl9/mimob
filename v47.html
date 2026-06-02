@@ -1226,7 +1226,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v5.06';
+const APP_VERSION = 'v5.07';
 const CREDIT_RATES={'mimo-v2.5-pro':{i:300,o:600},'mimo-v2.5':{i:100,o:200},'mimo-v2-pro':{i:700,o:2100},'mimo-v2-omni':{i:280,o:1400}};
 function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['mimo-v2.5-pro'];return inTok*r.i+outTok*r.o;}
 function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
@@ -1975,7 +1975,8 @@ async function send() {
     reqTokens=reqInputTok+reqOutputTok;
     if(!acc){lastErr='Empty response from server';throw new Error(lastErr);}
     const _imgExtSend=extractImagePrompt(acc);acc=_imgExtSend.text;
-    const _imgPromptSend=_imgExtSend.imagePrompt;const _imgUrlSend=_imgExtSend.imageUrl;
+    let _imgPromptSend=_imgExtSend.imagePrompt,_imgUrlSend=_imgExtSend.imageUrl;
+    if(!_imgUrlSend){const _svgS=extractSvgFromResponse(acc);if(_svgS.svgUrl){acc=_svgS.text;_imgUrlSend=_svgS.svgUrl;_imgPromptSend='generated image';}}
   };
 
   try {
@@ -2058,8 +2059,7 @@ async function sendBackground(conv) {
   const _bgStart=Date.now();
   const _bgTimer=setInterval(()=>{
     const s=Math.floor((Date.now()-_bgStart)/1000);
-    if(!asstEl.closest('.msg-group')?.dataset.idx || asstEl.closest('.msg-group').dataset.idx===-1)
-      asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">&#9203; Processing &middot; ${s}s &mdash; safe to close the app</em>`;
+    asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">&#9203; Processing &middot; ${s}s &mdash; safe to close the app</em>`;
   },1000);
   document.getElementById('msgs').scrollTop = 9e9;
 
@@ -2093,7 +2093,7 @@ async function sendBackground(conv) {
     asstEl.innerHTML = '<em style="color:var(--tx3);font-size:11px">&#9203; Processing in background &mdash; safe to close the app</em>';
 
     clearInterval(_bgTimer);
-    _watchJob(jobRef, conv, newIdx, asstEl);
+    _watchJob(jobRef, conv, newIdx, asstEl, _bgTimer);
 
   } catch(err) {
     clearInterval(_bgTimer);
@@ -2101,7 +2101,7 @@ async function sendBackground(conv) {
   }
 }
 
-function _watchJob(jobRef, conv, msgIdx, asstEl) {
+function _watchJob(jobRef, conv, msgIdx, asstEl, bgTimer) {
   _activeJobWatches.add(jobRef.id);
   const unsub = jobRef.onSnapshot(doc => {
     if(!doc.exists){ _activeJobWatches.delete(jobRef.id); unsub(); return; }
@@ -2109,6 +2109,7 @@ function _watchJob(jobRef, conv, msgIdx, asstEl) {
     if(job.status !== 'done' && job.status !== 'error') return;
     _activeJobWatches.delete(jobRef.id);
     unsub();
+    if(bgTimer)clearInterval(bgTimer);
     _applyJobResult(job, doc.id, conv, msgIdx);
     jobRef.delete().catch(()=>{});
     updateTokenBar();
@@ -2120,11 +2121,12 @@ function _applyJobResult(job, jobId, conv, msgIdx) {
   if(job.status === 'done') {
     const tokens  = (job.inputTokens||0)+(job.outputTokens||0);
     const credits = calcCredits(job.inputTokens||0, job.outputTokens||0, job.model||CFG.model);
-    const _imgExtBg=extractImagePrompt(job.response);
+    let _imgExtBg=extractImagePrompt(job.response),_bgTxt=_imgExtBg.text,_bgIUrl=_imgExtBg.imageUrl,_bgIPrompt=_imgExtBg.imagePrompt;
+    if(!_bgIUrl){const _svgB=extractSvgFromResponse(_bgTxt);if(_svgB.svgUrl){_bgTxt=_svgB.text;_bgIUrl=_svgB.svgUrl;_bgIPrompt='generated image';}}
     conv.msgs[msgIdx] = {
-      role:'assistant', text:_imgExtBg.text, ts:Date.now(),
+      role:'assistant', text:_bgTxt, ts:Date.now(),
       tokens:tokens||undefined, credits:credits||undefined,
-      imagePrompt:_imgExtBg.imagePrompt||undefined, imageUrl:_imgExtBg.imageUrl||undefined
+      imagePrompt:_bgIPrompt||undefined, imageUrl:_bgIUrl||undefined
     };
     db.totalTokens = (db.totalTokens||0) + tokens;
   } else {
@@ -2186,6 +2188,15 @@ function watchPendingJobs() {
 
 
 // ══ IMAGE GENERATION (Pollinations.AI) ══
+function extractSvgFromResponse(text){
+  const m=text.match(/<svg[\s\S]*?<\/svg>/i);
+  if(!m)return{text,svgUrl:null};
+  try{
+    const svgUrl='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(m[0])));
+    const clean=text.replace(/```[\s\S]*?```/g,'').replace(/<svg[\s\S]*?<\/svg>/i,'').trim();
+    return{text:clean,svgUrl};
+  }catch(e){return{text,svgUrl:null};}
+}
 function buildImageUrl(prompt){
   const seed=Math.floor(Math.random()*999999);
   return 'https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)
@@ -2209,7 +2220,7 @@ function injectImageIntoEl(el,imageUrl,imagePrompt){
   wrap.appendChild(loading);wrap.appendChild(img);el.appendChild(wrap);
 }
 function getImageInstruction(){
-  return '\n\nYou have image generation capability. When the user asks you to generate, draw, create, or visualize any image, include `[IMAGE: detailed English prompt]` on its own line in your response, then your normal reply. Make the prompt descriptive for best results. Do NOT include [IMAGE:...] unless the user is asking for an image.';
+  return '\n\nImage generation: when asked to draw, generate, create, or visualize an image, you MUST respond with `[IMAGE: detailed English prompt]` on its own line. NEVER write SVG code, NEVER write code of any kind for images. Only use the [IMAGE:] marker then your normal text. Omit [IMAGE:] entirely if the user is not asking for an image.';
 }
 async function sendImageRequest(prompt, conv){
   // Option A: direct /image or draw: command — skip MiMo, go straight to Pollinations
