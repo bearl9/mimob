@@ -913,6 +913,17 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
       <textarea id="ws-dlg-input" placeholder="e.g. What AI chips does NVIDIA sell? Who are their competitors? What's their stock price?"></textarea>
     </div>
 
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+      <span style="font-size:12px;color:var(--tx3);white-space:nowrap">Show</span>
+      <select id="ws-dlg-count" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--sur);color:var(--tx2);cursor:pointer">
+        <option value="5" selected>5 most relevant</option>
+        <option value="10">10 most relevant</option>
+        <option value="15">15 most relevant</option>
+        <option value="20">20 most relevant</option>
+        <option value="25">25 most relevant</option>
+      </select>
+    </div>
+
     <div class="ws-dlg-footer">
       <div class="ws-dlg-cost-note">Powered by Decodo · Google Search</div>
       <div class="ws-dlg-footer-actions">
@@ -1220,7 +1231,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v5.11';
+const APP_VERSION = 'v5.12';
 const CREDIT_RATES={'mimo-v2.5-pro':{i:300,o:600},'mimo-v2.5':{i:100,o:200},'mimo-v2-pro':{i:700,o:2100},'mimo-v2-omni':{i:280,o:1400}};
 function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['mimo-v2.5-pro'];return inTok*r.i+outTok*r.o;}
 function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
@@ -2637,6 +2648,7 @@ async function executeWsSearch(){
   if(!fbUser){showToast('⚠️ Sign in with Google to use web search');return;}
   const query=(document.getElementById('ws-dlg-input')?.value||'').trim();
   if(!query){showToast('⚠️ Enter a search query');return;}
+  const wsCount=parseInt(document.getElementById('ws-dlg-count')?.value||'5');
   closeWsDialog();
   // Ensure a conversation exists
   if(!curId){
@@ -2678,8 +2690,16 @@ async function executeWsSearch(){
     const apiMsgs=[
       ...histMsgs,
       {role:'user',content:[{type:'text',text:
-        `User question: ${query}\n\nGoogle Search Results:\n\n${searchText}\n\n`+
-        `Please answer the question based on these search results. Cover all relevant results — list the key websites, tools, or findings with brief descriptions. Include URLs where available.`
+        `User question: ${query}\n\nGoogle Search Results (pool of up to 30):\n\n${searchText}\n\n`+
+        `From the results above, select the ${wsCount} most relevant to the user's question and present them as a numbered list.\n`+
+        `For each result use EXACTLY this format:\n`+
+        `N. [Website or Brand Name](URL) — one sentence description\n\n`+
+        `Rules:\n`+
+        `- Use the website or brand name as the link text, NEVER the raw URL\n`+
+        `- Every result must have a working markdown hyperlink [text](url)\n`+
+        `- Keep descriptions short (1 sentence)\n`+
+        `- Only include results relevant to the question\n`+
+        `- Do not add any intro paragraph, just the numbered list`
       }]}
     ];
     const res=await fetch(API_URL,{
