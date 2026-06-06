@@ -26,6 +26,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-functions-compat.js"></script>
 <style>
 /* ═══════════════════════════════════════
    HEARTH — cosy pillow bubbles
@@ -913,7 +914,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
     </div>
 
     <div class="ws-dlg-footer">
-      <div class="ws-dlg-cost-note">$0.005/search · MiMo Web Search</div>
+      <div class="ws-dlg-cost-note">Powered by Decodo · Google Search</div>
       <div class="ws-dlg-footer-actions">
         <button class="btn btn-g" onclick="closeWsDialog()">Cancel</button>
         <button class="btn btn-p" id="ws-dlg-search-btn" onclick="executeWsSearch()" style="display:flex;align-items:center;gap:5px"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAxzSURBVGhDvZr5V1RXtsfzv/SLE2hQnBAoZB6KgiqKURAQCFMVFENRTCLzJDNSDM4aNCtx6PiSZxI7GhwSE4c4dYImaZOYztALTZZPY4Y2fN46tyi5dakCtF3vh++6955z9j77e/beZ6p6oanHFNq9vbylsbvwOaNIBmXdXHAh1+lYJ+x+obm3qG/7q/V0jVhkKFd8zwVn7UWZHco2yjpX9a51dg6XMXKgjhcaewtbRGVDV8G80dhdOPUunvb3541CGrtNsr4cUd9ppGvYwgvCFU9LwAbj1NN5B/855h4cYfd/QOD/F/WdhdR3OpbNQmBu9s8H8+9HEFCWPQcC823nCs8iPy0jI1D+lIrsSp7FAGd4Gj3PlYCy3DnEjCFge3cm66xMiel6uz4FAaXAbJi9w8aeQpr7imjZVvIEzf3FtPQX09Rb5HJqdA55W/vMZ8MsOfBskIzcVkJtez5lFSkY8qJ4eVMoWanBZGeEUVgQQ3lNGg2dBbRsK5XIKHXYYB+g2QfKhQdcC7iCGO2mviJKLckk69ah8VmMZv1L6LV+JCar2ZAaTUJSODGRPqhVbkSplpCRHMjmxmxaB0pp7DEpdM5uuB0uCdjmW0d3uYIwoLI2gyTtOiK8l5C8KQaztYWOD96h/7OPsX5xhcHb17B+eYW+G+dpO3UMs7VVIhS+5kVe3hRGU69JGgClbmewx78iB5yF0Byj0C2ML8Fg0BOyehGRKncq9vTSdu44vdc/ZOj2dQZuXWLbzYsSBm5exHrrMtt/+JJdd79mx49fUHdkL1HBq4gLW0Fdu0Hy5Ix+HOx5jgRErL+cGUmEzyJKjH7EatbR9O7rNJ08Qs+VM1iF8eMXpvHZBYZu36B6v5XYBDXJOSk0nzjCwGcXSEyKICZ4OXXt+fPIC9u3ICA2dLMQEJgZRkJQjLyxIJYgzxfZfTCZ7Xti0WrW0/zeUZr+dpieq2ek0R+QjL9I//gFBm9fp/ndI6i9F1JtUVFl9kXt9ReKexoY+PRj1AEriY/0ksJpepaa2b/cDicemDvzxQhVN2QRtHIR7Vs1XL5joX5LCJpIf1rPvEnjiUN0XTiJ9fNPpkb/ovQc+ec4pq4GUqLcOf9FKec/L+a1t9KID/cgRh9OYtRqov3dyMmOpmWgxKkd9rXEjmciIObyuChfslLWMnatgFNXCjjw13S0/kvIbzTTevYtWk69Qf+nH9vifyqEhr6+Qe2hvUR6/YVdo4mcvFzA/sOpaINeIjVmOW+O5dBnjSXEy42alpypUHIMmXkQmB0iycpr0glZs4h9r2/k/atG3v4wlw/Gi2lrDScq3Ifmk0clL4hkHrg5nQciiYdvX8PYaCHSZzEboj2JCfaguSWS9y4bOX29kPcuFbJBu4KMtAhaBkpn9D8LgblXYhGXW4ctpG4IJTttLec/L+H0DROnrxdw4XYJ/QNRRKv9aP/gOO3n36bt3P8w8I9rjHx3i+F/jjP87Tgj399i5093aDv7DuF+nuweTeLqd+Wc/buJsWsmLn1VRk+/jsj1ntJhRsx0SjtcEJjdA9I83VuEqTSBgNX/RZLOnarN67FYVFjKVdJ7vHoxwX4ebCzNJKU4neSiNNIr88mqLSJzi4ksO+qKyaovIWjdYkpNKuoaIyirCMRSGURlTQgGgwr/VQsoq0ylzTrTC09NQKySwnW6CE9iAjypLExjsykTS04qltw0ynLTMOekUlWYwZbiDKpyN1CVN4WcRCqzE6aRY39PpLYsm/gIFTGqpVSkBlGxMZjN6aFUbwrBmOBLqI87ReYNUs4pbXJCwL4bnZnAYr5P0HuTn6xh4oevgN+BX2HyEfCHDZO/2MokiHL7u8BvwL9t7eUAettqaMoOgM8HmbzYya0j5Uxe6ICrvRxq3UiotxvVjdlSBMhtc7KQVUiVIs7lO0UhKPYrYd6LuXnlHPAn/Pv+FP6Xn7//BxN3xqX3yV/uwu8/w68/w6N78NvPTD66x8OJO9y59Qn8fp8/H05ImHx4F3hMV3MVjdn+/H6pE2t5DD1mHf0WHQ/OtsK1PooSfEhND5cG0WaT4zana7hc6QGRrNOjL3aXReZEktTr+OPhv7j3/Rcc3NnD0dFBXhnpYv/QVoa7arnz5TXePrqfw/sHOPbqDo69vovX9vRz+BUrY+8core5nMsfnGDy8QOJwONfJiSvdDVXs9UQzK3Xyhis0MPEPvbUJnLlgBk+3caAWYteq5LssM9AtqdAoXS9MmsOCMGS8iRiQ1bzy0/f8uv9H3hluIM3Dozw36/u5N039kuG/vDVp5w4NsrBnd0cP7yX0R3dvPnabi6eOc57b73K2PHXuXHhfclTSgLNOYE8/GgrXcVR7KlPIlO7ljM7jPDZAN2mSGJj/Wl+4gFlDsxBQBxMatvyCPJawIk3XpHi1pYDIq4fweMH8OcDePxQMk4qF2WTD6dy4ZEtrESO/PkQ/rg/DaCnrYZGkQM3rTw43cLVg6Wc3m7gaGc6v320lZSw5eQaYmQhpCRgQdzMzboOCOHsbA1qH3dpdH+8c5OJb28x8c04E+Jd4Jtx7n4jnje5KytzaPO1+J4uvzfxHS1bSqjJ8OPeWDM/vlvHTycbuT/WxFdvVlOe4kdE4HIpXFyd4CQPzEVALCYilASJYK8X0fh7EBOyEm3gCnSBnhKiA1ZI0PqvICbQE33oSrSizN8GbYCn9C0haAX6sJXEhq0iyt+DSNVSNH5LUavciQnyIDbYgxCvhUQGr2BLa57snDBzYzdnCMlJ2N2oD19NlNqNLLM3mUXryCr2JtfsS26ZL9lFPoR5L0KnWYZxsx95Fh9yy3zIK/fFUK3CWKMip9SHxBRPgrwX4L9qIfogD/LifanJCyd9ozdpOd5E+C6m2JxEm9UsHT9tE8w0ASfT6BwEptBqLcVo0KNev4SS1iBKO4IoaQumYVhD+55oOkZ1lDUEE6lyw1DkS/dBLVv3R9NgVWOuCyA1cw3qEHc0qqUY47wZsug53pXF2WEDH203MlonFr8QIvyWUdOa6+SoOQ3beUAi4CyEZrpLQErq9nw0fh6kZqzG3BmCqSmQso5QWvdG0bwjkvpBNWnpa1i/YiG6qJfQhC8l3HcJOtUycqO96DBGcawtjXND+VzaZZKeJ/tzONWfw8WdheRGryYxfv0TjzvbhdrLbR7onEnA+d2NDUJxXq6OsHULMW4JwNwZSo7Fjw0bVxEVtgy1nztxwcvJ0q6lONGP1twI9lUn8nZXFueG8vhwxMBpax7nhvPZWRXH/i2JjA3kSR6wlmoJXLuAqrpMaRG1G++MhOQBx5VYbqhrAmJGaOopJD7CC13kUpJTVhPh7caGIE8sSf6MmGM43pnB2cFcydgPh/M5O5jH+wO5nOzPlkb77FA+2yv0BKxZwJBFxye7TRxp3kiE10IyM9W0biuhXmGs0g5ZCE1vJZSNXEGcC2qac6Srk5BVC2jICGG0KoF9lXHsssSyrzKBQw3JHO9I52+9WZzse/mJ8af6chgbyCZPv476rBDODeayb3M8Wt/FxOl8pFnH1bQphxRCz0pAupjqL6aqIQtdmCcJgcuo3xTM9tIY9lbEsdsSy45SPTvMevZWxDNanciBmkQObJ6GKNtTEYc5SUXwqhdJ0vtKs51t4+akT5nhdsg8MPNudDrubOFk20Q5TmdifajrMJCeFkq4yh39encMOi/q04PpNkQyaNIyUqJjuCSGoSId/YVRtOdGUL0xgGzNGjQ+S4gI8MBg1NPcV+ww69jDRhk+8nJZDtimUXmyzCQgvoUSR4VNPSbpmnBzUzbZuVHERnujCRALlBvRKjf0fkuJXb+UGD93NL5LUPu6oQlaTmKsHwVF8dR1GCV5ETbKvuX2OIPTdcCZgP3XEWd1dhnpQldc4vYVU7c1n4raDIrLkiUjjYWxFBQnUFyeQmVdps3oqXtUIedMnyvj5WVODjTOjbQZ7+ghpVJ5nTBKHEHtl71Pbqj7Smwx7nDWnUlgNsj7cknAbsi0scqwcq5QCWXnchnbu/Csq9xzbKvULeAyhJRQGjBb27llbJB/K3UqZeTl8nqnBJQCs0GuVAllW7nMtNHzDx9n+mclMF8oFc9FQDmLOXpjdnll3VMRUAory5VQtnMO0U5JaHZZeb1sIXMkoFSiNMrZt6uOHOuc77GU+uYD0d4lASWcKXdWNjdmEpAb/zRE5AT6xL8+BIn5QPyooCybrrPVi6eyTt7GoUz2bZOfKSOXs+m32TBysI7/A2Caf8D0b0sfAAAAAElFTkSuQmCC" width="16" height="16" style="display:block"> Search</button>
@@ -982,13 +983,6 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
           <option value="CNY"><option value="AUD"><option value="HKD">
           <option value="THB"><option value="IDR"><option value="CAD">
         </datalist>
-      </div>
-      <div class="fg">
-        <label class="fl">🔍 Web Search API Key
-          <span style="font-size:9px;color:var(--tx3);font-weight:400;margin-left:6px">Required for Smart Web Search · $0.005/search</span>
-        </label>
-        <input class="fi" id="ws-key-in" type="password" placeholder="tp-xxxxxxxxxxxx" autocomplete="new-password" spellcheck="false">
-        <div style="font-size:9px;color:var(--tx3);margin-top:3px">message Bearl for websearch API</div>
       </div>
       <div class="ma">
         <button class="btn btn-g" onclick="closeSettings()">Cancel</button>
@@ -1226,7 +1220,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v5.08';
+const APP_VERSION = 'v5.09';
 const CREDIT_RATES={'mimo-v2.5-pro':{i:300,o:600},'mimo-v2.5':{i:100,o:200},'mimo-v2-pro':{i:700,o:2100},'mimo-v2-omni':{i:280,o:1400}};
 function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['mimo-v2.5-pro'];return inTok*r.i+outTok*r.o;}
 function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
@@ -2598,7 +2592,6 @@ function openSettings(){
   document.getElementById('sys-in').value=CFG.systemPrompt;
   document.getElementById('model-in').value=CFG.model;
   document.getElementById('currency-in').value=CFG.defaultCurrency||'';
-  document.getElementById('ws-key-in').value=CFG.wsApiKey||'';
   document.getElementById('tts-en-in').value=CFG.ttsVoiceEn||'';
   document.getElementById('tts-zh-in').value=CFG.ttsVoiceZh||'';
   switchTab('config');document.getElementById('set-modal').classList.add('open');
@@ -2620,7 +2613,6 @@ function saveSettings(){
   CFG.ttsVoiceEn=newEn;
   CFG.ttsVoiceZh=newZh;
   CFG.defaultCurrency=document.getElementById('currency-in').value.trim().toUpperCase();
-  CFG.wsApiKey=document.getElementById('ws-key-in').value.trim();
   if(typeof updateHdrSub==='function')updateHdrSub();
   updateModelBtn();
   saveCfg();closeSettings();
@@ -2642,7 +2634,7 @@ function closeWsDialog(){
   document.getElementById('ws-dialog').classList.remove('open');
 }
 async function executeWsSearch(){
-  if(!CFG.wsApiKey){showToast('⚠️ Web Search API key not set in Settings → Config');return;}
+  if(!fbUser){showToast('⚠️ Sign in with Google to use web search');return;}
   const query=(document.getElementById('ws-dlg-input')?.value||'').trim();
   if(!query){showToast('⚠️ Enter a search query');return;}
   closeWsDialog();
@@ -2656,66 +2648,85 @@ async function executeWsSearch(){
   const conv=db.convs.find(c=>c.id===curId);
   if(!conv)return;
   // Add the search as a user message
-  const userMsg={role:'user',text:`🌐 ${query}`,ts:Date.now()};
-  conv.msgs.push(userMsg);
+  conv.msgs.push({role:'user',text:`🌐 ${query}`,ts:Date.now()});
   save();renderMsgs();
   if(streaming){abortCtrl?.abort();streaming=false;}
-  const asstEl=appendDOM({role:'assistant',text:'',ts:Date.now()},true,-1);
+  const asstEl=appendDOM({role:'assistant',text:''},true,-1);
   document.getElementById('send-btn').style.display='none';
   document.getElementById('stop-btn').style.display='flex';
   streaming=true;abortCtrl=new AbortController();
-  let acc='',wsAnnotations=[];
-  asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">🔍 Searching…</em><span class="cursor"></span>`;
+  let acc='';
   try{
+    // ── Step 1: Fetch Google results via Decodo (key hidden in Firebase Function) ──
+    asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">🔍 Searching Google…</em><span class="cursor"></span>`;
+    const fn=firebase.app().functions('asia-east1');
+    const decodoSearch=fn.httpsCallable('decodoSearch',{timeout:30000});
+    let searchText='';
+    try{
+      const result=await decodoSearch({query});
+      searchText=result?.data?.text||'';
+    }catch(fe){
+      throw new Error('Search failed: '+(fe.message||fe.code||String(fe)));
+    }
+    if(!searchText)throw new Error('No results returned from search');
+
+    // ── Step 2: Ask MiMo to answer using search results as context ──
+    asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">⚡ Generating answer…</em><span class="cursor"></span>`;
     const sp=((CFG.systemPrompt||'')+getCurrentTimestamp()+getCurrencyNote()).trim();
-    const msgs=buildOAI(conv.msgs,sp);
-    const res=await fetch(WS_URL,{
+    // Build conversation history (exclude the just-added user msg)
+    const histMsgs=buildAPI(conv.msgs.slice(0,-1));
+    const apiMsgs=[
+      ...histMsgs,
+      {role:'user',content:[{type:'text',text:
+        `User question: ${query}\n\nGoogle Search Results:\n\n${searchText}\n\n`+
+        `Please answer the question based on these search results. Be concise and cite the relevant sources.`
+      }]}
+    ];
+    const res=await fetch(API_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','api-key':CFG.wsApiKey},
+      signal:abortCtrl.signal,
+      headers:{'Content-Type':'application/json','x-api-key':CFG.apiKey,'anthropic-version':'2023-06-01'},
       body:JSON.stringify({
         model:CFG.model,
         max_tokens:8192,
-        stream:true,
-        messages:msgs,
-        tools:[{type:'web_search',max_keyword:1,force_search:true}]
-      }),
-      signal:abortCtrl.signal
+        stream:false,
+        messages:apiMsgs,
+        ...(sp?{system:sp}:{})
+      })
     });
     if(!res.ok){const e=await res.text();throw new Error(`API ${res.status}: ${e}`);}
-    const reader=res.body.getReader();const dec=new TextDecoder();let buf='';
-    while(true){
-      const{done,value}=await reader.read();if(done)break;
-      buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();
-      for(const line of lines){
-        if(!line.startsWith('data: '))continue;
-        const d=line.slice(6).trim();if(d==='[DONE]')break;
-        try{
-          const p=JSON.parse(d);
-          const annots=p.choices?.[0]?.delta?.annotations;
-          if(annots?.length)wsAnnotations.push(...annots);
-          const delta=p.choices?.[0]?.delta?.content||'';
-          if(delta){acc+=delta;renderMD(asstEl,acc);document.getElementById('msgs').scrollTop=9e9;}
-        }catch(e){}
-      }
-    }
+    const data=await res.json();
+    acc=(data.content?.find(b=>b.type==='text')?.text)||data.content?.[0]?.text||'';
+    const inputTok=data.usage?.input_tokens||0;
+    const outputTok=data.usage?.output_tokens||0;
+    const tokens=inputTok+outputTok;
+    const credits=calcCredits(inputTok,outputTok,CFG.model);
+    if(tokens>0){db.totalTokens=(db.totalTokens||0)+tokens;updateTokenBar();}
     if(!acc)throw new Error('Empty response');
+    renderMD(asstEl,acc);
+    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:tokens||undefined,credits:credits||undefined};
+    conv.msgs.push(asstMsg);save();updateHdrSub();
+    // Action bar
+    const newIdx=conv.msgs.length-1;
+    const wrap=asstEl.closest('.msg-group');
+    if(wrap){
+      wrap.dataset.idx=newIdx;
+      let bar=wrap.querySelector('.msg-action-bar');
+      if(!bar){bar=document.createElement('div');bar.className='msg-action-bar';wrap.appendChild(bar);}
+      bar.innerHTML=`<span class="mab-time">${fmtTime(asstMsg.ts)}</span>`
+        +(tokens>0?`<span class="mab-sep">·</span><span class="mab-tokens">${fmtTokens(tokens)}</span>`:'')
+        +`<span class="mab-sep">·</span><button class="mab-btn" onclick="copyMsgText(this,${newIdx})" title="Copy">📋 copy</button>`;
+    }
   }catch(e){
     if(e.name!=='AbortError'){
-      asstEl.innerHTML=`<span style="color:var(--red)">⚠️ Search failed: ${esc(e.message)}</span>`;
+      asstEl.innerHTML=`<span style="color:var(--red)">⚠️ ${esc(e.message)}</span>`;
     }
+  }finally{
     streaming=false;abortCtrl=null;
     document.getElementById('send-btn').style.display='flex';
     document.getElementById('stop-btn').style.display='none';
-    return;
+    document.getElementById('msgs').scrollTop=9e9;
   }
-  renderMD(asstEl,acc);
-  if(wsAnnotations.length){const srcEl=document.createElement('div');srcEl.className='ws-sources';srcEl.innerHTML=renderAnnotations(wsAnnotations);asstEl.appendChild(srcEl);}
-  const asstMsg={role:'assistant',text:acc,ts:Date.now(),annotations:wsAnnotations.length?[...wsAnnotations]:undefined};
-  conv.msgs.push(asstMsg);save();updateHdrSub();
-  streaming=false;abortCtrl=null;
-  document.getElementById('send-btn').style.display='flex';
-  document.getElementById('stop-btn').style.display='none';
-  document.getElementById('msgs').scrollTop=9e9;
 }
 document.getElementById('ws-dialog').addEventListener('click',e=>{if(e.target===document.getElementById('ws-dialog'))closeWsDialog();});
 function renderAnnotations(annotations){
