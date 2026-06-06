@@ -1220,7 +1220,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v5.10';
+const APP_VERSION = 'v5.11';
 const CREDIT_RATES={'mimo-v2.5-pro':{i:300,o:600},'mimo-v2.5':{i:100,o:200},'mimo-v2-pro':{i:700,o:2100},'mimo-v2-omni':{i:280,o:1400}};
 function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['mimo-v2.5-pro'];return inTok*r.i+outTok*r.o;}
 function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
@@ -2679,7 +2679,7 @@ async function executeWsSearch(){
       ...histMsgs,
       {role:'user',content:[{type:'text',text:
         `User question: ${query}\n\nGoogle Search Results:\n\n${searchText}\n\n`+
-        `Please answer the question based on these search results. Be concise and cite the relevant sources.`
+        `Please answer the question based on these search results. Cover all relevant results — list the key websites, tools, or findings with brief descriptions. Include URLs where available.`
       }]}
     ];
     const res=await fetch(API_URL,{
