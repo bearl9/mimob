@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#FFF8EC">
-<title>Hearth · MiMo</title>
+<title>Hearth · Bristotle</title>
 <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
@@ -618,15 +618,23 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 </head>
 <body>
 
-<!-- ══ SIGN-IN GATE ══ -->
+<!-- ══ ACCESS KEY GATE ══ -->
 <div id="setup-ov">
   <div class="setup-box">
     <div class="setup-hero">
       <span class="setup-logo">🕯️</span>
-      <div class="setup-title">MiMo Chat</div>
-      <div class="setup-sub">Sign in with Google to get started.<br>No API key needed — everything's already set up.</div>
+      <div class="setup-title">Bristotle Chat</div>
+      <div class="setup-sub">Enter your access key to get started.<br>It will be remembered on this device.</div>
     </div>
-    <button class="btn btn-p" style="width:100%;font-size:16px;padding:12px" onclick="setupSignIn()">Sign in with Google →</button>
+    <div class="fg">
+      <label class="fl">Access Key</label>
+      <div class="setup-key-row">
+        <input class="fi" id="setup-key" type="password" placeholder="tp-xxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+        <button class="setup-vis" onclick="toggleKeyVis('setup-key',this)">👁️</button>
+      </div>
+      <div class="setup-hint">Your key unlocks the app — no other API keys are ever needed.</div>
+    </div>
+    <button class="btn btn-p" id="setup-key-btn" style="width:100%;font-size:16px;padding:12px" onclick="saveSetupKey()">Start Chatting →</button>
   </div>
 </div>
 
@@ -799,7 +807,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
       <div class="ibox">
         <div class="irow">
           <button id="att-plus-btn" onclick="openAttSheet()" title="Add attachment">+</button>
-          <textarea id="input" rows="1" placeholder="Message MiMo…  (Enter to send · Shift+Enter for newline)"
+          <textarea id="input" rows="1" placeholder="Message Bristotle…  (Enter to send · Shift+Enter for newline)"
             onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
           <button id="send-btn" onclick="send()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button>
           <button id="stop-btn" onclick="stopStream()"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg></button>
@@ -986,7 +994,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
     <!-- Voice Panel -->
     <div id="panel-voice" style="display:none">
-      <p style="font-size:12px;color:var(--tx3);margin:0 0 16px">Set a custom voice for each language using MiMo VoiceDesign. Leave blank to use the Default fastest voice.</p>
+      <p style="font-size:12px;color:var(--tx3);margin:0 0 16px">Set a custom voice for each language using Bristotle VoiceDesign. Leave blank to use the Default fastest voice.</p>
       <div class="fg">
         <label class="fl">🇬🇧 English Voice
           <span style="font-size:10px;color:var(--tx3);font-weight:400;margin-left:6px">VoiceDesign description</span>
@@ -1054,7 +1062,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
         <div class="rm-hero">
           <span style="font-size:28px">⚡</span>
           <div>
-            <div style="font-size:15px;font-weight:700;color:#fff">MiMo Chat</div>
+            <div style="font-size:15px;font-weight:700;color:#fff">Bristotle Chat</div>
             <div style="font-size:11px;color:var(--tx3)">All features · tap to learn</div>
           </div>
         </div>
@@ -1073,14 +1081,14 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
           <div class="rm-row"><span class="rm-badge rm-img">🖼️ Image</span> Tap <b>＋</b> to attach an image, or <b>paste / drag & drop</b> on desktop.</div>
           <div class="rm-row"><span class="rm-badge rm-img">📄 PDF</span> Extracts text from up to <b>30 pages</b> automatically.</div>
           <div class="rm-row"><span class="rm-badge rm-img">📝 File</span> Attach code or text files (.py, .js, .html, .json, etc.).</div>
-          <div class="rm-row"><span class="rm-badge rm-img">🎵 Audio</span> Attach audio files — MiMo acknowledges them in context.</div>
+          <div class="rm-row"><span class="rm-badge rm-img">🎵 Audio</span> Attach audio files — Bristotle acknowledges them in context.</div>
           <div class="rm-row"><span class="rm-badge rm-img">🌐 Browse</span> Paste any URL to fetch and attach webpage content as context.</div>
           <div class="rm-row"><span class="rm-badge rm-img">🎤 Voice</span> Tap the mic to dictate — transcribed into the message box.</div>
         </div>
 
         <div class="rm-sec">
           <div class="rm-sec-title">🔖 Bookmarks & Pinning</div>
-          <div class="rm-row"><span class="rm-badge rm-bm">Full Message</span> Tap 📌 on any MiMo reply to pin the <b>entire message</b> — always included in future API calls.</div>
+          <div class="rm-row"><span class="rm-badge rm-bm">Full Message</span> Tap 📌 on any Bristotle reply to pin the <b>entire message</b> — always included in future API calls.</div>
           <div class="rm-row"><span class="rm-badge rm-bm">Block Snippet</span> Tap the 🔖 that appears beside any paragraph or code block to pin just <b>that block</b>.</div>
           <div class="rm-row"><span class="rm-badge rm-bm">Selection</span> <b>Highlight text</b> → tap <b>"🔖 Bookmark Selection"</b> to pin an exact snippet.</div>
           <div class="rm-row"><span class="rm-badge rm-bm">Always included</span> Pinned content is injected into every API call regardless of conversation length.</div>
@@ -1112,7 +1120,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
           <div class="rm-row"><span class="rm-badge rm-tip">Send</span> Tap <b>Send</b> or press <kbd>Enter</kbd>. Use <kbd>Shift+Enter</kbd> for a new line on desktop.</div>
           <div class="rm-row"><span class="rm-badge rm-tip">Copy code</span> Every code block has a <b>Copy</b> button in the top-right corner.</div>
           <div class="rm-row"><span class="rm-badge rm-tip">Copy message</span> Tap 📋 on any message to copy the full text.</div>
-          <div class="rm-row"><span class="rm-badge rm-tip">Regenerate</span> Tap 🔄 on any MiMo reply to regenerate the response.</div>
+          <div class="rm-row"><span class="rm-badge rm-tip">Regenerate</span> Tap 🔄 on any Bristotle reply to regenerate the response.</div>
           <div class="rm-row"><span class="rm-badge rm-tip">Auto-retry</span> Empty API responses are retried up to <b>3 times</b> automatically.</div>
           <div class="rm-row"><span class="rm-badge rm-tip">TTS</span> Tap 🔊 on any reply to hear it read aloud.</div>
         </div>
@@ -1149,7 +1157,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
           <div style="font-size:11px;font-weight:700;color:var(--tx);margin:10px 0 4px">How we use it</div>
           <ul style="margin:0 0 8px;padding-left:16px;font-size:12px">
-            <li>To run MiMo Chat and generate AI responses via the MiMo API</li>
+            <li>To run Bristotle Chat and generate AI responses via the Bristotle API</li>
             <li>To sync your data across devices when you choose to sign in</li>
             <li>We do not sell, share, or use your data for advertising</li>
           </ul>
@@ -1157,7 +1165,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
           <div style="font-size:11px;font-weight:700;color:var(--tx);margin:10px 0 4px">Third-party services</div>
           <ul style="margin:0 0 8px;padding-left:16px;font-size:12px">
             <li><b>Google Firebase</b> — authentication &amp; cloud sync (only when signed in)</li>
-            <li><b>MiMo API</b> — your messages are sent here to generate responses</li>
+            <li><b>Bristotle API</b> — your messages are sent here to generate responses</li>
             <li><b>Jina AI / AllOrigins</b> — used only when you use the Browse feature</li>
           </ul>
 
@@ -1175,7 +1183,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
         <!-- Usage Policy -->
         <div style="background:var(--crust);border-radius:var(--r);padding:12px;border:1px solid var(--bdr2)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);margin-bottom:8px">📋 Usage Policy</div>
-          <div style="font-size:10px;color:var(--tx3);margin-bottom:10px">Effective: 17 May 2026 · By using MiMo Chat you accept these terms</div>
+          <div style="font-size:10px;color:var(--tx3);margin-bottom:10px">Effective: 17 May 2026 · By using Bristotle Chat you accept these terms</div>
 
           <div style="font-size:11px;font-weight:700;color:var(--red);margin:10px 0 4px">Prohibited</div>
           <ul style="margin:0 0 8px;padding-left:16px;font-size:12px">
@@ -1214,7 +1222,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v6.00';
+const APP_VERSION = 'v6.10';
 const CREDIT_RATES={'deepseek-v4-pro':{i:435,o:870},'deepseek-v4-flash':{i:140,o:280},'mimo-v2.5':{i:100,o:200},'mimo-v2.5-asr':{i:100,o:200}};
 function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['deepseek-v4-flash'];return inTok*r.i+outTok*r.o;}
 function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
@@ -1288,7 +1296,7 @@ const save = () => {
   const minimal={...stripped,convs:cur?[cur]:[]};
   if(tryWrite(minimal)){showToast('⚠️ Storage critically full — only current chat kept. Delete old chats!');syncPush();return;}
 
-  console.error('MiMo save failed: storage full even after trimming');
+  console.error('Bristotle save failed: storage full even after trimming');
   showToast('⚠️ Storage completely full — please delete old conversations in the sidebar.');
   syncPush();
 };
@@ -1358,10 +1366,32 @@ function onCameraPhoto(files){
 }
 
 // ══ SIGN-IN GATE — keys are hidden server-side, sign-in is the only requirement ══
-async function setupSignIn(){
-  await signInGoogle();
-  // onAuthStateChanged hides #setup-ov once fbUser is set
+// ══ ACCESS KEY GATE ══
+// Key is verified server-side (never embedded client-side), then we sign in
+// anonymously so Firestore sync + the hidden-key Firebase Functions all work
+// exactly as if signed in with Google — without forcing a Google account.
+async function saveSetupKey(){
+  const key=document.getElementById('setup-key').value.trim();
+  if(!key){alert('Please enter your access key.');return;}
+  const btn=document.getElementById('setup-key-btn');
+  btn.disabled=true;btn.textContent='Verifying…';
+  try{
+    const fn=firebase.app().functions('asia-east1');
+    const verify=fn.httpsCallable('verifyAccessKey');
+    await verify({key});
+    if(!fbAuth.currentUser){ await fbAuth.signInAnonymously(); }
+    // onAuthStateChanged hides #setup-ov once fbUser is set
+  }catch(e){
+    alert('⚠️ Invalid access key. Please try again.');
+    btn.disabled=false;btn.textContent='Start Chatting →';
+  }
 }
+function toggleKeyVis(inputId,btn){
+  const inp=document.getElementById(inputId);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁️';}
+}
+document.getElementById('setup-key').addEventListener('keydown',e=>{if(e.key==='Enter')saveSetupKey();});
 
 // ══ CONVERSATIONS ══
 function newConv() {
@@ -1572,7 +1602,7 @@ function appendDOM(msg, isStreaming=false, msgIdx=-1) {
   const body = document.createElement('div'); body.className = 'msg-body';
   const meta = document.createElement('div'); meta.className = 'msg-meta';
   const tokStr=msg.tokens?` · ${msg.tokens.toLocaleString()}tk`:(msg.role==='user'&&msg.text?` · ~${Math.ceil(msg.text.length/4)}tk`:'');
-  meta.innerHTML = `<span class="msg-name ${msg.role==='user'?'nm-user':'nm-mimo'}">${msg.role==='user'?'You':'MiMo'}</span>
+  meta.innerHTML = `<span class="msg-name ${msg.role==='user'?'nm-user':'nm-mimo'}">${msg.role==='user'?'You':'Bristotle'}</span>
     <span class="msg-time">${fmtTime(msg.ts)}<span class="msg-tokens" title="${msg.tokens?'Total request tokens (input+output)':'Estimated tokens (chars÷4)'}">${tokStr}</span></span>`;
   body.appendChild(meta);
   if (msg.bookmarked) {
@@ -2131,7 +2161,7 @@ function getImageInstruction(){
   return '\n\nImage generation: when asked to draw, generate, create, or visualize an image, you MUST respond with `[IMAGE: detailed English prompt]` on its own line. NEVER write SVG code, NEVER write code of any kind for images. Only use the [IMAGE:] marker then your normal text. Omit [IMAGE:] entirely if the user is not asking for an image.';
 }
 async function sendImageRequest(prompt, conv){
-  // Option A: direct /image or draw: command — skip MiMo, go straight to Pollinations
+  // Option A: direct /image or draw: command — skip the chat model, go straight to Pollinations
   const imageUrl = buildImageUrl(prompt);
   const asstEl = appendDOM({role:'assistant',text:'',ts:Date.now()},true,-1);
   asstEl.innerHTML = '<em style="color:var(--tx3);font-size:11px">🎨 Generating image…</em>';
@@ -2566,7 +2596,7 @@ async function executeWsSearch(){
     }
     if(!searchText)throw new Error('No results returned from search');
 
-    // ── Step 2: Ask MiMo to answer using search results as context ──
+    // ── Step 2: Ask Bristotle to answer using search results as context ──
     asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">⚡ Generating answer…</em><span class="cursor"></span>`;
     const sp=((CFG.systemPrompt||'')+getCurrentTimestamp()+getCurrencyNote()).trim();
     // Build conversation history (exclude the just-added user msg)
@@ -2944,7 +2974,7 @@ function switchSBTab(tab){
     document.getElementById('sb-diary-cats').style.display='block';
     document.getElementById('sb-diary-footer').style.display='block';
     document.getElementById('diary-mode-banner').classList.remove('show');
-    document.getElementById('input').placeholder='Message MiMo…  (Enter to send · Shift+Enter for newline)';
+    document.getElementById('input').placeholder='Message Bristotle…  (Enter to send · Shift+Enter for newline)';
     updateHdrSub();
     renderMsgs();
   }
@@ -3012,7 +3042,7 @@ function closeDiaryMain(){
   document.getElementById('sb-diary-footer').style.display='block';
   // Main area: restore normal chat
   document.getElementById('diary-mode-banner').classList.remove('show');
-  document.getElementById('input').placeholder='Message MiMo…  (Enter to send · Shift+Enter for newline)';
+  document.getElementById('input').placeholder='Message Bristotle…  (Enter to send · Shift+Enter for newline)';
   updateHdrSub();
   renderMsgs();
   if(typeof closeSBDrawer==='function')closeSBDrawer();
@@ -3091,7 +3121,7 @@ function appendDiaryMsgMain(m,idx){
   const body=document.createElement('div');body.className='msg-body';
   const meta=document.createElement('div');meta.className='msg-meta';
   const ts=m.ts?new Date(m.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'';
-  meta.innerHTML=`<span class="msg-name ${isUser?'nm-user':'nm-mimo'}">${isUser?'You':'MiMo'}</span><span class="msg-time">${ts}</span>`;
+  meta.innerHTML=`<span class="msg-name ${isUser?'nm-user':'nm-mimo'}">${isUser?'You':'Bristotle'}</span><span class="msg-time">${ts}</span>`;
   body.appendChild(meta);
   const content=document.createElement('div');content.className='msg-content';
   if(m.image){
@@ -3248,7 +3278,7 @@ async function sendDiaryEntryMain(){
   const msgsEl=document.getElementById('msgs');
   const typing=document.createElement('div');
   typing.className='msg-group role-assistant';typing.id='dm-typing-main';
-  typing.innerHTML='<div class="msg-body"><div class="msg-content" style="background:rgba(250,244,232,.5);color:var(--tx3);font-style:italic;font-size:13px;padding:10px 14px;border-radius:12px">MiMo is thinking…</div></div>';
+  typing.innerHTML='<div class="msg-body"><div class="msg-content" style="background:rgba(250,244,232,.5);color:var(--tx3);font-style:italic;font-size:13px;padding:10px 14px;border-radius:12px">Bristotle is thinking…</div></div>';
   msgsEl.appendChild(typing);msgsEl.scrollTop=msgsEl.scrollHeight;
   const sysPrompt=buildDiaryCatPrompt(cat,userMsg.ts);
   const apiMsgs=(db.diaryChats[key]||[]).map(m=>{
@@ -3342,7 +3372,7 @@ async function sendDiaryMsg(){
   const el=document.getElementById('sb-diary-msgs-area');
   const typing=document.createElement('div');
   typing.className='dm-wrap dm-assistant';typing.id='dm-typing';
-  typing.innerHTML='<div class="dm-bubble" style="color:var(--tx3);font-style:italic">MiMo is thinking…</div>';
+  typing.innerHTML='<div class="dm-bubble" style="color:var(--tx3);font-style:italic">Bristotle is thinking…</div>';
   el.appendChild(typing);el.scrollTop=el.scrollHeight;
   const cat=_diaryCat;
   const sysPrompt=buildDiaryCatPrompt(cat,userMsg.ts);
@@ -3375,21 +3405,21 @@ function buildDiaryCatPrompt(cat, nowTs){
     ?((db.notes||[]).find(n=>n.id===_diaryMode.noteId)?.label||null)
     :null;
   const extras={
-    food:`You are MiMo, a friendly health diary assistant. When the user shares a food image or describes a meal, identify the food and estimate calories. Reply concisely (2-3 sentences). End with: "Recording: [food name] — approx. [X] cal."`,
-    medication:`You are MiMo, a health diary assistant. When the user shares a medication image or name, identify it, note dosage if visible. Reply briefly. If the user did not specify a time, use exactly this time: ${fmtTime(nowTs||Date.now())}. End with: "Recording: [medication] [dosage] at [time]."`,
-    sleep:`You are MiMo, a health diary assistant. Help log sleep duration and quality. Reply in 1-2 sentences. End with: "Recording: [hours] hours sleep, [quality]."`,
-    water:`You are MiMo, a health diary assistant. Track daily water intake. Reply in 1 sentence. End with: "Recording: [amount] water."`,
-    exercise:`You are MiMo, a health diary assistant. Log exercise type, duration, estimate calories burned. Reply briefly. End with: "Recording: [activity] for [duration]."`,
-    weight:`You are MiMo, a health diary assistant. Record body weight. End with: "Recording: [weight] [unit]."`,
-    symptom:`You are MiMo, a health diary assistant. Record symptoms supportively. End with: "Recording: [symptom description]."`,
-    expenses:`You are MiMo, an expenses diary assistant. The user is logging a purchase or transaction. ${CFG.defaultCurrency?`ALWAYS state the amount in ${CFG.defaultCurrency}. If the user enters a foreign currency, convert it to ${CFG.defaultCurrency} and show both (e.g. "USD 10 ≈ RM 47").`:'Always include the currency symbol with every amount.'} Reply in 1-2 sentences. End with: "Recording: [item/description] — [final amount with currency]."`,
+    food:`You are Bristotle, a friendly health diary assistant. When the user shares a food image or describes a meal, identify the food and estimate calories. Reply concisely (2-3 sentences). End with: "Recording: [food name] — approx. [X] cal."`,
+    medication:`You are Bristotle, a health diary assistant. When the user shares a medication image or name, identify it, note dosage if visible. Reply briefly. If the user did not specify a time, use exactly this time: ${fmtTime(nowTs||Date.now())}. End with: "Recording: [medication] [dosage] at [time]."`,
+    sleep:`You are Bristotle, a health diary assistant. Help log sleep duration and quality. Reply in 1-2 sentences. End with: "Recording: [hours] hours sleep, [quality]."`,
+    water:`You are Bristotle, a health diary assistant. Track daily water intake. Reply in 1 sentence. End with: "Recording: [amount] water."`,
+    exercise:`You are Bristotle, a health diary assistant. Log exercise type, duration, estimate calories burned. Reply briefly. End with: "Recording: [activity] for [duration]."`,
+    weight:`You are Bristotle, a health diary assistant. Record body weight. End with: "Recording: [weight] [unit]."`,
+    symptom:`You are Bristotle, a health diary assistant. Record symptoms supportively. End with: "Recording: [symptom description]."`,
+    expenses:`You are Bristotle, an expenses diary assistant. The user is logging a purchase or transaction. ${CFG.defaultCurrency?`ALWAYS state the amount in ${CFG.defaultCurrency}. If the user enters a foreign currency, convert it to ${CFG.defaultCurrency} and show both (e.g. "USD 10 ≈ RM 47").`:'Always include the currency symbol with every amount.'} Reply in 1-2 sentences. End with: "Recording: [item/description] — [final amount with currency]."`,
     note:noteLabel
-      ?`You are MiMo, a personal diary assistant. The user is writing in their "${noteLabel}" note. Accept and record ANYTHING they share — expenses, purchases, transactions, thoughts, tasks, or any topic whatsoever. Never refuse based on topic. Reply in 1-2 sentences acknowledging what they wrote. You MUST end with a new line: "Recording: [concise one-line summary of what was logged]."`
-      :`You are MiMo, a personal diary assistant. Accept and record ANYTHING the user shares — expenses, thoughts, tasks, or any topic. Never refuse based on topic. Reply briefly (1-2 sentences). You MUST end with a new line: "Recording: [concise one-line summary]."`
+      ?`You are Bristotle, a personal diary assistant. The user is writing in their "${noteLabel}" note. Accept and record ANYTHING they share — expenses, purchases, transactions, thoughts, tasks, or any topic whatsoever. Never refuse based on topic. Reply in 1-2 sentences acknowledging what they wrote. You MUST end with a new line: "Recording: [concise one-line summary of what was logged]."`
+      :`You are Bristotle, a personal diary assistant. Accept and record ANYTHING the user shares — expenses, thoughts, tasks, or any topic. Never refuse based on topic. Reply briefly (1-2 sentences). You MUST end with a new line: "Recording: [concise one-line summary]."`
   };
   const base=noteLabel
-    ?`You are MiMo, a personal diary assistant. The user is writing in their "${noteLabel}" note. Accept and record anything they share. Reply briefly. End with: "Recording: [summary]."`
-    :`You are MiMo, a friendly diary assistant. Help log ${DIARY_CATS[cat]?.label||cat} data briefly. End with a "Recording:" summary.`;
+    ?`You are Bristotle, a personal diary assistant. The user is writing in their "${noteLabel}" note. Accept and record anything they share. Reply briefly. End with: "Recording: [summary]."`
+    :`You are Bristotle, a friendly diary assistant. Help log ${DIARY_CATS[cat]?.label||cat} data briefly. End with a "Recording:" summary.`;
   const curr=CFG.defaultCurrency?` If a price is mentioned, convert to ${CFG.defaultCurrency} if needed and include the converted amount in the Recording line.`:'';
   return (extras[cat]||base)+curr;
 }
@@ -3531,13 +3561,13 @@ function renderPinsPanel(){
   if(!conv){el.innerHTML='<div class="pp-empty">No conversation selected.</div>';return;}
   const pins=conv.msgs.filter(m=>m.bookmarked);
   if(!pins.length){
-    el.innerHTML='<div class="pp-empty">No pinned messages yet.<br><br>Use <strong>★ pin</strong> below any MiMo reply to pin it here.</div>';
+    el.innerHTML='<div class="pp-empty">No pinned messages yet.<br><br>Use <strong>★ pin</strong> below any Bristotle reply to pin it here.</div>';
     return;
   }
   el.innerHTML=pins.map(m=>{
     const idx=conv.msgs.indexOf(m);
     const ts=m.ts?new Date(m.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):'';
-    const role=m.role==='user'?'You':'MiMo';
+    const role=m.role==='user'?'You':'Bristotle';
     const preview=(m.text||'').slice(0,200)+((m.text||'').length>200?'…':'');
     const tokCount='~'+Math.ceil((m.text||'').length/4)+' tok';
     return `<div class="pp-item">
@@ -3654,7 +3684,7 @@ function downloadPolicyPDF(){
   const content = document.getElementById('policy-content').innerHTML;
   const w = window.open('','_blank','width=720,height=960');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>MiMo Chat — Privacy &amp; Usage Policy</title>
+<title>Bristotle Chat — Privacy &amp; Usage Policy</title>
 <style>
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;max-width:640px;margin:36px auto;padding:0 24px;color:#1a1a1a;font-size:13px;line-height:1.7}
   h1{font-size:20px;font-weight:800;margin-bottom:2px}
@@ -3672,16 +3702,16 @@ function downloadPolicyPDF(){
   .footer{text-align:center;font-size:11px;color:#999;margin-top:24px}
   @media print{body{margin:0}}
 </style></head><body>
-<h1>MiMo Chat — Policies</h1>
+<h1>Bristotle Chat — Policies</h1>
 <div class="meta">Effective: 17 May 2026 &nbsp;·&nbsp; Bearl &nbsp;·&nbsp; bear.leongzq@gmail.com &nbsp;·&nbsp; Singapore PDPA 2012</div>
 <div class="section">
   <div class="section-title">🔒 Privacy Policy</div>
   <div class="field-title">What we collect</div>
   <ul><li>Chat messages &amp; conversation history — stored locally on your device</li><li>Diary entries — stored locally only</li><li>Google name, email &amp; profile photo — only if you sign in for sync</li><li>App settings (API key, voice config) — stored locally, never transmitted</li></ul>
   <div class="field-title">How we use it</div>
-  <ul><li>To run MiMo Chat and generate AI responses via the MiMo API</li><li>To sync your data across devices when you choose to sign in</li><li>We do not sell, share, or use your data for advertising</li></ul>
+  <ul><li>To run Bristotle Chat and generate AI responses via the Bristotle API</li><li>To sync your data across devices when you choose to sign in</li><li>We do not sell, share, or use your data for advertising</li></ul>
   <div class="field-title">Third-party services</div>
-  <ul><li><b>Google Firebase</b> — authentication &amp; cloud sync (only when signed in)</li><li><b>MiMo API</b> — your messages are sent here to generate responses</li><li><b>Jina AI / AllOrigins</b> — used only when you use the Browse feature</li></ul>
+  <ul><li><b>Google Firebase</b> — authentication &amp; cloud sync (only when signed in)</li><li><b>Bristotle API</b> — your messages are sent here to generate responses</li><li><b>Jina AI / AllOrigins</b> — used only when you use the Browse feature</li></ul>
   <div class="warn">⚠ If you sign in, your chat data is stored in Google Firebase. The developer (Bearl) has administrative access to this database. Do not store highly sensitive personal information in chats.</div>
   <div class="field-title">Your rights (PDPA)</div>
   <p>You have the right to access, correct, and withdraw consent for your personal data. To request data deletion, sign out and contact <b>bear.leongzq@gmail.com</b>.</p>
@@ -3690,7 +3720,7 @@ function downloadPolicyPDF(){
 </div>
 <div class="section">
   <div class="section-title">📋 Usage Policy</div>
-  <p style="font-size:11px;color:#888;margin-bottom:8px">By using MiMo Chat you accept these terms.</p>
+  <p style="font-size:11px;color:#888;margin-bottom:8px">By using Bristotle Chat you accept these terms.</p>
   <div class="prohibited">Prohibited</div>
   <ul><li>Using this service for commercial purposes without written permission from Bearl</li><li>Reselling, redistributing, or sublicensing access to this service</li><li>Extracting, proxying, or exposing the underlying API to third parties</li><li>Using this app to access the API for any purpose other than personal chat</li><li>Generating illegal, harmful, threatening, or abusive content</li><li>Attempting to reverse-engineer or exploit the service</li></ul>
   <div class="permitted">Permitted</div>
@@ -4054,7 +4084,7 @@ fbAuth.onAuthStateChanged(async user => {
     startRealtimeSync();
     watchPendingJobs();
 
-    showToast('Signed in as ' + (user.displayName || user.email));
+    showToast(user.isAnonymous ? 'Access granted — ready to chat' : 'Signed in as ' + (user.displayName || user.email));
     _restoreLastConv();
     renderSB(); renderMsgs();
     updateTokenBar();
