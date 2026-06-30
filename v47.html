@@ -618,23 +618,15 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 </head>
 <body>
 
-<!-- ══ API KEY SETUP ══ -->
+<!-- ══ SIGN-IN GATE ══ -->
 <div id="setup-ov">
   <div class="setup-box">
     <div class="setup-hero">
       <span class="setup-logo">🕯️</span>
       <div class="setup-title">MiMo Chat</div>
-      <div class="setup-sub">Enter your MiMo API key to get started.<br>It will be saved on this device.</div>
+      <div class="setup-sub">Sign in with Google to get started.<br>No API key needed — everything's already set up.</div>
     </div>
-    <div class="fg">
-      <label class="fl">MiMo API Key</label>
-      <div class="setup-key-row">
-        <input class="fi" id="setup-key" type="password" placeholder="tp-xxxxxxxxxxxx" autocomplete="off" spellcheck="false">
-        <button class="setup-vis" onclick="toggleKeyVis('setup-key',this)">👁️</button>
-      </div>
-      <div class="setup-hint">Your key is stored locally on this device only and never sent anywhere except the MiMo API.</div>
-    </div>
-    <button class="btn btn-p" style="width:100%;font-size:16px;padding:12px" onclick="saveSetupKey()">Start Chatting →</button>
+    <button class="btn btn-p" style="width:100%;font-size:16px;padding:12px" onclick="setupSignIn()">Sign in with Google →</button>
   </div>
 </div>
 
@@ -968,19 +960,10 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
       <div class="fg"><label class="fl">System Prompt</label>
         <textarea class="ft" id="sys-in" placeholder="You are a helpful assistant…"></textarea>
       </div>
-      <div class="fg">
-        <label class="fl">API Key</label>
-        <div class="fi-row">
-          <input class="fi" id="key-in" type="password" placeholder="tp-xxxxxxxxxxxx" autocomplete="off" spellcheck="false">
-          <button class="fi-eye" onclick="toggleKeyVis('key-in',this)">👁️</button>
-        </div>
-      </div>
       <div class="fg"><label class="fl">Model</label>
         <select class="fi" id="model-in" style="cursor:pointer">
-          <option value="mimo-v2.5-pro">mimo-v2.5-pro — Flagship</option>
-          <option value="mimo-v2.5">mimo-v2.5 — Multimodal</option>
-          
-          
+          <option value="deepseek-v4-pro">deepseek-v4-pro — Flagship</option>
+          <option value="deepseek-v4-flash">deepseek-v4-flash — Fast</option>
         </select>
       </div>
       <div class="fg">
@@ -1231,15 +1214,12 @@ body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--tx);heigh
 
 <script>
 // ══ CONFIG ══
-const APP_VERSION = 'v5.12';
-const CREDIT_RATES={'mimo-v2.5-pro':{i:300,o:600},'mimo-v2.5':{i:100,o:200},'mimo-v2-pro':{i:700,o:2100},'mimo-v2-omni':{i:280,o:1400}};
-function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['mimo-v2.5-pro'];return inTok*r.i+outTok*r.o;}
+const APP_VERSION = 'v6.00';
+const CREDIT_RATES={'deepseek-v4-pro':{i:435,o:870},'deepseek-v4-flash':{i:140,o:280},'mimo-v2.5':{i:100,o:200},'mimo-v2.5-asr':{i:100,o:200}};
+function calcCredits(inTok,outTok,model){const r=CREDIT_RATES[model]||CREDIT_RATES['deepseek-v4-flash'];return inTok*r.i+outTok*r.o;}
 function fmtCredits(cr){if(cr>=1e9)return(cr/1e9).toFixed(1)+'B cr';if(cr>=1e6)return(cr/1e6).toFixed(1)+'M cr';if(cr>=1e3)return Math.round(cr/1e3)+'K cr';return cr+' cr';}
-const API_URL = 'https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages';
-const OAI_URL = 'https://token-plan-sgp.xiaomimimo.com/v1/chat/completions';
-const WS_URL  = 'https://api.xiaomimimo.com/v1/chat/completions'; // web search — uses main endpoint where plugin is active
 const TTS_MODEL = 'mimo-v2.5-tts';
-// API key is user-entered; stored in CFG.apiKey
+// All API keys are hidden server-side in Firebase Functions (deepseekChat, mimoChat) — sign-in required
 const TTS_VOICES = [
   {id:'茉莉',label:'茉莉 (Chinese Female)',lang:'zh'},
   {id:'冰糖',label:'冰糖 (Chinese Female)',lang:'zh'},
@@ -1250,7 +1230,7 @@ const TTS_VOICES = [
   {id:'Milo',label:'Milo (English Male)',lang:'en'},
   {id:'Dean',label:'Dean (English Male)',lang:'en'},
 ];
-let CFG = { model: 'mimo-v2.5', systemPrompt: '', apiKey: '', ttsVoiceEn: '', ttsVoiceZh: '', webSearch: false, wsApiKey: '', wsMode: 'simple', defaultCurrency: '' };
+let CFG = { model: 'deepseek-v4-flash', systemPrompt: '', ttsVoiceEn: '', ttsVoiceZh: '', webSearch: false, wsMode: 'simple', defaultCurrency: '' };
 const WS_MODES={
   simple:{max_keyword:1,limit:2,label:'Simple'},
   pro:   {max_keyword:2,limit:3,label:'Pro'},
@@ -1377,21 +1357,11 @@ function onCameraPhoto(files){
   document.getElementById('camera-in').value='';
 }
 
-// ══ API KEY SETUP ══
-function saveSetupKey(){
-  const key=document.getElementById('setup-key').value.trim();
-  if(!key){alert('Please enter your MiMo API key.');return;}
-  CFG.apiKey=key;saveCfg();
-  document.getElementById('setup-ov').classList.add('hidden');
-  document.getElementById('input').focus();
+// ══ SIGN-IN GATE — keys are hidden server-side, sign-in is the only requirement ══
+async function setupSignIn(){
+  await signInGoogle();
+  // onAuthStateChanged hides #setup-ov once fbUser is set
 }
-function toggleKeyVis(inputId,btn){
-  const inp=document.getElementById(inputId);
-  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
-  else{inp.type='password';btn.textContent='👁️';}
-}
-// Allow Enter key in setup
-document.getElementById('setup-key').addEventListener('keydown',e=>{if(e.key==='Enter')saveSetupKey();});
 
 // ══ CONVERSATIONS ══
 function newConv() {
@@ -1838,7 +1808,7 @@ function buildAPI(msgs) {
   });
 }
 
-// OpenAI-compatible format — used when conversation has audio (mimo-v2-omni via /v1/chat/completions)
+// OpenAI-compatible format — kept for TTS/ASR Firebase calls (mimoChat useOAI:true)
 function buildOAI(msgs, systemPrompt) {
   const n=msgs.length;const recentNonBm=new Set();let count=0;
   for(let i=n-1;i>=0&&count<20;i--){if(!msgs[i].bookmarked){recentNonBm.add(i);count++;}}
@@ -1875,15 +1845,14 @@ function pickModel(msgs) {
   const n=msgs.length;const recentNonBm=new Set();let count=0;
   for(let i=n-1;i>=0&&count<20;i--){if(!msgs[i].bookmarked){recentNonBm.add(i);count++;}}
   const included=msgs.filter((m,i)=>m.bookmarked||recentNonBm.has(i));
-  if(included.some(m=>(m.images||[]).length>0))return'mimo-v2-omni';
-  if(included.some(m=>(m.audioInputs||[]).length>0))return'mimo-v2-omni';
+  if(included.some(m=>(m.images||[]).length>0))return'mimo-v2.5';
   return CFG.model;
 }
 
 // ══ SEND ══
 async function send() {
   if (streaming) return;
-  if(!CFG.apiKey){document.getElementById('setup-ov').classList.remove('hidden');return;}
+  if(!fbUser){document.getElementById('setup-ov').classList.remove('hidden');return;}
   if (_diaryMode) { await sendDiaryEntryMain(); return; }
   const inputEl = document.getElementById('input');
   const text = inputEl.value.trim();
@@ -1906,13 +1875,27 @@ async function send() {
     files: atts.filter(a=>a.type==='file' ).map(a=>({name:a.name,content:a.content})),
     audios:atts.filter(a=>a.type==='audio').map(a=>({name:a.name,size:a.size}))
   };
-  if (!conv.msgs.length&&text) { conv.title=text.slice(0,45)+(text.length>45?'…':''); document.getElementById('hdr-title').textContent=conv.title; renderSB(); }
-  conv.msgs.push(userMsg); save();
-  appendDOM(userMsg, false, conv.msgs.length-1);
   inputEl.value=''; inputEl.style.height='auto';
   atts=[]; document.getElementById('att-preview').innerHTML='';
 
-  // Option A: /image or draw: command → direct Pollinations, skip MiMo
+  // Transcribe voice recordings into text before the message ever reaches a chat model
+  // (DeepSeek can't take audio; mimo-v2.5-asr only transcribes, it doesn't converse)
+  if(userMsg.audioInputs.length){
+    showToast('🎤 Transcribing…');
+    try{
+      const transcript=await transcribeAudioInputs(userMsg.audioInputs);
+      userMsg.text=(userMsg.text?userMsg.text+'\n\n':'')+transcript;
+    }catch(e){
+      showToast('⚠️ Transcription failed: '+e.message);
+      return;
+    }
+  }
+
+  if (!conv.msgs.length&&userMsg.text) { conv.title=userMsg.text.slice(0,45)+(userMsg.text.length>45?'…':''); document.getElementById('hdr-title').textContent=conv.title; renderSB(); }
+  conv.msgs.push(userMsg); save();
+  appendDOM(userMsg, false, conv.msgs.length-1);
+
+  // Option A: /image or draw: command → direct Pollinations, skip chat model
   const _imgCmd=text.match(/^\/image\s+(.+)|^draw:\s*(.+)/i);
   if(_imgCmd){
     const _imgPrompt=(_imgCmd[1]||_imgCmd[2]).trim();
@@ -1920,124 +1903,11 @@ async function send() {
     return;
   }
 
-  // Use Firebase background mode if user is signed in and no audio attachments
-  const _hasAudioNow=conv.msgs.some(m=>(m.audioInputs||[]).length>0);
-  if(fbUser && !_hasAudioNow){
-    await sendBackground(conv);
-    return;
-  }
-
-  const snippetsCtx = buildSnippetsContext(conv.msgs);
-  const asstEl = appendDOM({role:'assistant',text:'',ts:Date.now()},true,-1);
-  document.getElementById('send-btn').style.display='none';
-  document.getElementById('stop-btn').style.display='flex';
-  streaming=true; abortCtrl=new AbortController();
-  const activeModel = pickModel(conv.msgs);
-  let acc='', attempt=0, lastErr='', reqTokens=0, reqInputTok=0, reqOutputTok=0;
-  const hasAudio=conv.msgs.some(m=>(m.audioInputs||[]).length>0);
-  const _tStart=Date.now();
-  const _tIv=setInterval(()=>{
-    const s=Math.floor((Date.now()-_tStart)/1000);
-    if(!acc)asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">↗ ${activeModel}${hasAudio?' 🎤':''} · ${s}s</em><span class="cursor"></span>`;
-  },1000);
-
-  const tryStream = async () => {
-    attempt++; acc=''; reqTokens=0; reqInputTok=0; reqOutputTok=0;
-    const sp=((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()+getImageInstruction()).trim();
-    if(attempt>1){
-      asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">Retrying… (${attempt}/3)</em><span class="cursor"></span>`;
-    }
-    wsAnnotations=[];
-    const useOAI=hasAudio;
-    let url,hdrs,body;
-    if(useOAI){
-      url=OAI_URL;
-      hdrs={'Content-Type':'application/json','Authorization':'Bearer '+CFG.apiKey};
-      body={model:activeModel,max_tokens:8192,stream:false,messages:buildOAI(conv.msgs,sp)};
-    }else{
-      url=API_URL;
-      hdrs={'Content-Type':'application/json','x-api-key':CFG.apiKey,'anthropic-version':'2023-06-01'};
-      body={model:activeModel,max_tokens:8192,stream:false,messages:buildAPI(conv.msgs)};
-      if(sp)body.system=sp;
-    }
-    const res=await fetch(url,{method:'POST',headers:hdrs,body:JSON.stringify(body),signal:abortCtrl.signal});
-    if (!res.ok) {
-      const eText=await res.text();
-      lastErr=`API Error ${res.status}: ${eText}`; throw new Error(lastErr);
-    }
-    const data=await res.json();
-    if(useOAI){
-      acc=data.choices?.[0]?.message?.content||'';
-      reqInputTok=data.usage?.prompt_tokens||0;
-      reqOutputTok=data.usage?.completion_tokens||0;
-      const annots=data.choices?.[0]?.message?.annotations;
-      if(annots?.length)wsAnnotations.push(...annots);
-    }else{
-      acc=(data.content?.find(b=>b.type==='text')?.text)||data.content?.[0]?.text||'';
-      reqInputTok=data.usage?.input_tokens||0;
-      reqOutputTok=data.usage?.output_tokens||0;
-    }
-    reqTokens=reqInputTok+reqOutputTok;
-    if(!acc){lastErr='Empty response from server';throw new Error(lastErr);}
-    const _imgExtSend=extractImagePrompt(acc);acc=_imgExtSend.text;
-    let _imgPromptSend=_imgExtSend.imagePrompt,_imgUrlSend=_imgExtSend.imageUrl;
-    if(!_imgUrlSend){const _svgS=extractSvgFromResponse(acc);if(_svgS.svgUrl){acc=_svgS.text;_imgUrlSend=_svgS.svgUrl;_imgPromptSend='generated image';}}
-  };
-
-  try {
-    let ok=false;
-    while(attempt<3&&!ok){
-      try{await tryStream();ok=true;}
-      catch(e){
-        if(e.name==='AbortError')throw e;
-        if(attempt>=3)throw e;
-        await new Promise(r=>setTimeout(r,1000*attempt));
-      }
-    }
-    // Add tokens to global counter
-    if(reqTokens>0){ db.totalTokens=(db.totalTokens||0)+reqTokens; save(); updateTokenBar(); }
-    const reqCredits=reqTokens>0?calcCredits(reqInputTok,reqOutputTok,activeModel):0;
-    renderMD(asstEl, acc);
-    if(wsAnnotations.length){const srcEl=document.createElement('div');srcEl.className='ws-sources';srcEl.innerHTML=renderAnnotations(wsAnnotations);asstEl.appendChild(srcEl);}
-    if(_imgUrlSend)injectImageIntoEl(asstEl,_imgUrlSend,_imgPromptSend);
-    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:reqTokens||undefined,credits:reqCredits||undefined,annotations:wsAnnotations.length?[...wsAnnotations]:undefined,imagePrompt:_imgPromptSend||undefined,imageUrl:_imgUrlSend||undefined};
-    conv.msgs.push(asstMsg); save();
-    const newIdx=conv.msgs.length-1;
-    const wrap=asstEl.closest('.msg-group');
-    if (wrap) {
-      wrap.dataset.idx=newIdx;
-      wrapBlocks(asstEl, newIdx, []);
-      updateHdrSub();
-      let bar=wrap.querySelector('.msg-action-bar');
-      if(!bar){bar=document.createElement('div');bar.className='msg-action-bar';wrap.appendChild(bar);}
-      const tokStr3=reqTokens?reqTokens+' tok'+(reqCredits?' · ~'+fmtCredits(reqCredits):''):'';
-      bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
-        ${tokStr3?`<span class="mab-sep">·</span><span class="mab-tokens">${tokStr3}</span>`:''}
-        <span class="mab-sep">·</span>
-        <button class="mab-btn" id="mab-pin-${newIdx}" onclick="toggleBookmark(${newIdx},event)" title="Pin to context">★ pin</button>
-        <span class="mab-sep">·</span>
-        <button class="mab-btn" onclick="copyMsgText(this,${newIdx})" title="Copy">📋 copy</button>
-        <span class="mab-sep">·</span>
-        <button class="mab-btn" onclick="regenMsg(${newIdx})" title="Regenerate">↺ regen</button>
-        <span class="mab-sep">·</span>
-        <button class="mab-btn" id="tts-btn-${newIdx}" onclick="playTTS(${newIdx},this)" title="Listen">🔊 listen</button>`;
-      // Pre-fetch TTS for this message in background
-      setTimeout(()=>_prefetchMsgTTS(acc),500);
-    }
-  } catch(e) {
-    if(e.name==='AbortError'){if(acc){conv.msgs.push({role:'assistant',text:acc,ts:Date.now()});save();}else{asstEl.innerHTML='<em style="color:var(--tx3)">Stopped.</em>';}}
-    else{asstEl.innerHTML=`<span style="color:var(--red)">⚠️ ${esc(lastErr||e.message)}</span><br><button onclick="send()" style="margin-top:8px;padding:5px 14px;background:var(--acc);border:none;border-radius:6px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">🔄 Retry</button>`;}
-  } finally {
-    clearInterval(_tIv);
-    streaming=false; abortCtrl=null;
-    document.getElementById('send-btn').style.display='flex';
-    document.getElementById('stop-btn').style.display='none';
-    inputEl.focus();
-  }
+  await sendBackground(conv);
 }
 
 function toggleModel(){
-  const order=['mimo-v2.5','mimo-v2.5-pro'];
+  const order=['deepseek-v4-flash','deepseek-v4-pro'];
   const idx=order.indexOf(CFG.model);
   CFG.model=order[(idx+1)%order.length];
   const sel=document.getElementById('model-in');if(sel)sel.value=CFG.model;
@@ -2048,8 +1918,39 @@ function updateModelBtn(){
   const ov=document.getElementById('model-overlay');
   if(!btn||!ov)return;
   btn.title='Model: '+CFG.model;
-  if(CFG.model==='mimo-v2.5-pro'){ov.style.background='rgba(220,50,50,0.5)';ov.style.opacity='1';}
+  if(CFG.model==='deepseek-v4-pro'){ov.style.background='rgba(220,50,50,0.5)';ov.style.opacity='1';}
   else{ov.style.opacity='0';}
+}
+
+// ══ HIDDEN-KEY API CALLS (Firebase Functions — keys never touch the browser) ══
+async function callDeepSeek({messages,model,systemPrompt,maxTokens}){
+  const fn=firebase.app().functions('asia-east1');
+  const fx=fn.httpsCallable('deepseekChat',{timeout:60000});
+  const r=await fx({messages,model,systemPrompt,maxTokens});
+  return r.data;
+}
+async function callMimo({messages,model,systemPrompt,useOAI,maxTokens,audio}){
+  const fn=firebase.app().functions('asia-east1');
+  const fx=fn.httpsCallable('mimoChat',{timeout:60000});
+  const r=await fx({messages,model,systemPrompt,useOAI,maxTokens,audio});
+  return r.data;
+}
+function _decodeB64Wav(b64){
+  const raw=atob(b64);const arr=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return URL.createObjectURL(new Blob([arr],{type:'audio/wav'}));
+}
+async function transcribeAudioInputs(audioInputs){
+  const parts=audioInputs.map(a=>{
+    const fmt=((a.mime||'audio/wav').split(';')[0].trim()).split('/')[1]||'wav';
+    return {type:'input_audio',input_audio:{data:a.data,format:fmt}};
+  });
+  const result=await callMimo({
+    messages:[{role:'user',content:parts}],
+    model:'mimo-v2.5-asr',
+    useOAI:true
+  });
+  return result.text||'';
 }
 
 // ══ BACKGROUND GENERATION (Firebase Cloud Function) ══
@@ -2059,6 +1960,8 @@ async function sendBackground(conv) {
   const snippetsCtx = buildSnippetsContext(conv.msgs);
   const sp = ((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()+getImageInstruction()).trim();
   const activeModel = pickModel(conv.msgs);
+  const hasImages = conv.msgs.some(m=>(m.images||[]).length>0);
+  const provider = hasImages?'mimo':'deepseek';
 
   const asstEl = appendDOM({role:'assistant',text:'',ts:Date.now()},true,-1);
   const _bgStart=Date.now();
@@ -2075,7 +1978,7 @@ async function sendBackground(conv) {
       model:        activeModel,
       systemPrompt: sp,
       useOAI:       false,
-      apiKey:       CFG.apiKey,
+      provider:     provider,
       status:       'pending',
       createdAt:    firebase.firestore.FieldValue.serverTimestamp(),
     };
@@ -2300,7 +2203,7 @@ async function _blobToWAVBase64(blob){
   });
 }
 
-// ══ VOICE — records audio → converts to WAV → sends to mimo-v2-omni ══
+// ══ VOICE — records audio → converts to WAV → transcribed via mimo-v2.5-asr at send time ══
 async function toggleVoice(){
   const btn=document.getElementById('voice-btn');
   if(isRecording){
@@ -2434,40 +2337,26 @@ function _estimateSecs(text){return Math.max(1,Math.round(1.5+text.length*0.04))
 async function _fetchTTSChunk(text){
   const lang=detectLang(text);
   const design=lang.startsWith('zh')?(CFG.ttsVoiceZh||''):lang.startsWith('en')?(CFG.ttsVoiceEn||''):'';
-  // Helper: decode base64 audio response from /v1/chat/completions
-  const _decodeB64Audio=async(res)=>{
-    if(!res.ok)throw new Error('TTS '+res.status);
-    const json=await res.json();
-    const b64=json.choices[0].message.audio.data;
-    const raw=atob(b64);const arr=new Uint8Array(raw.length);
-    for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
-    return URL.createObjectURL(new Blob([arr],{type:'audio/wav'}));
-  };
+  let result;
   if(design){
     // VoiceDesign: language-specific voice character
-    const res=await fetch(OAI_URL,{method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+CFG.apiKey},
-      body:JSON.stringify({
-        model:'mimo-v2.5-tts-voicedesign',
-        messages:[{role:'user',content:design},{role:'assistant',content:text}],
-        audio:{format:'wav'}
-      }),
-      signal:AbortSignal.timeout(35000)
+    result=await callMimo({
+      messages:[{role:'user',content:design},{role:'assistant',content:text}],
+      model:'mimo-v2.5-tts-voicedesign',
+      useOAI:true,
+      audio:{format:'wav'}
     });
-    return _decodeB64Audio(res);
   }else{
-    // Default: built-in default voice, same endpoint
-    const res=await fetch(OAI_URL,{method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+CFG.apiKey},
-      body:JSON.stringify({
-        model:'mimo-v2.5-tts',
-        messages:[{role:'assistant',content:text}],
-        audio:{format:'wav',voice:'mimo_default'}
-      }),
-      signal:AbortSignal.timeout(30000)
+    // Default: built-in default voice
+    result=await callMimo({
+      messages:[{role:'assistant',content:text}],
+      model:'mimo-v2.5-tts',
+      useOAI:true,
+      audio:{format:'wav',voice:'mimo_default'}
     });
-    return _decodeB64Audio(res);
   }
+  if(!result.audioData)throw new Error('TTS failed — no audio returned');
+  return _decodeB64Wav(result.audioData);
 }
 function _ttsKey(text){
   // Cache key includes language + active voice design so different voices don't collide
@@ -2598,8 +2487,6 @@ document.addEventListener('paste',e=>{const item=[...(e.clipboardData?.items||[]
 
 // ══ SETTINGS ══
 function openSettings(){
-  document.getElementById('key-in').value=CFG.apiKey||'';
-  document.getElementById('key-in').type='password';
   document.getElementById('sys-in').value=CFG.systemPrompt;
   document.getElementById('model-in').value=CFG.model;
   document.getElementById('currency-in').value=CFG.defaultCurrency||'';
@@ -2609,9 +2496,6 @@ function openSettings(){
 }
 function closeSettings(){document.getElementById('set-modal').classList.remove('open');}
 function saveSettings(){
-  const key=document.getElementById('key-in').value.trim();
-  if(!key){alert('API key cannot be empty.');return;}
-  CFG.apiKey=key;
   CFG.systemPrompt=document.getElementById('sys-in').value.trim();
   CFG.model=document.getElementById('model-in').value.trim();
   const newEn=document.getElementById('tts-en-in').value.trim();
@@ -2702,23 +2586,10 @@ async function executeWsSearch(){
         `- Do not add any intro paragraph, just the numbered list`
       }]}
     ];
-    const res=await fetch(API_URL,{
-      method:'POST',
-      signal:abortCtrl.signal,
-      headers:{'Content-Type':'application/json','x-api-key':CFG.apiKey,'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({
-        model:CFG.model,
-        max_tokens:8192,
-        stream:false,
-        messages:apiMsgs,
-        ...(sp?{system:sp}:{})
-      })
-    });
-    if(!res.ok){const e=await res.text();throw new Error(`API ${res.status}: ${e}`);}
-    const data=await res.json();
-    acc=(data.content?.find(b=>b.type==='text')?.text)||data.content?.[0]?.text||'';
-    const inputTok=data.usage?.input_tokens||0;
-    const outputTok=data.usage?.output_tokens||0;
+    const result=await callDeepSeek({messages:apiMsgs,model:CFG.model,systemPrompt:sp,maxTokens:8192});
+    acc=result.text||'';
+    const inputTok=result.inputTokens||0;
+    const outputTok=result.outputTokens||0;
     const tokens=inputTok+outputTok;
     const credits=calcCredits(inputTok,outputTok,CFG.model);
     if(tokens>0){db.totalTokens=(db.totalTokens||0)+tokens;updateTokenBar();}
@@ -2793,34 +2664,24 @@ async function testVoice(lang){
   const sample=_TEST_SAMPLES[lang];
   btn.textContent='⏳ Generating…';btn.disabled=true;
   try{
-    let res;
+    let result;
     if(design){
-      res=await fetch(OAI_URL,{method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+CFG.apiKey},
-        body:JSON.stringify({
-          model:'mimo-v2.5-tts-voicedesign',
-          messages:[{role:'user',content:design},{role:'assistant',content:sample}],
-          audio:{format:'wav'}
-        }),
-        signal:AbortSignal.timeout(35000)
+      result=await callMimo({
+        messages:[{role:'user',content:design},{role:'assistant',content:sample}],
+        model:'mimo-v2.5-tts-voicedesign',
+        useOAI:true,
+        audio:{format:'wav'}
       });
     }else{
-      res=await fetch(OAI_URL,{method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+CFG.apiKey},
-        body:JSON.stringify({
-          model:'mimo-v2.5-tts',
-          messages:[{role:'assistant',content:sample}],
-          audio:{format:'wav',voice:'mimo_default'}
-        }),
-        signal:AbortSignal.timeout(30000)
+      result=await callMimo({
+        messages:[{role:'assistant',content:sample}],
+        model:'mimo-v2.5-tts',
+        useOAI:true,
+        audio:{format:'wav',voice:'mimo_default'}
       });
     }
-    if(!res.ok)throw new Error('TTS '+res.status+': '+(await res.text()));
-    const json=await res.json();
-    const b64=json.choices[0].message.audio.data;
-    const raw=atob(b64);const arr=new Uint8Array(raw.length);
-    for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
-    const url=URL.createObjectURL(new Blob([arr],{type:'audio/wav'}));
+    if(!result.audioData)throw new Error('TTS failed — no audio returned');
+    const url=_decodeB64Wav(result.audioData);
     _testAudio=new Audio(url);
     btn.textContent='⏸ Playing… (click to stop)';btn.disabled=false;
     _testAudio.onended=_testAudio.onerror=()=>{
@@ -2870,7 +2731,7 @@ function _convToJSON(conv){
     version:'mimo-chat-v1',
     id:conv.id,
     title:conv.title||'Untitled',
-    model:CFG.model||'mimo-v2.5',
+    model:CFG.model||'deepseek-v4-flash',
     created:conv.ts||Date.now(),
     messages:(conv.msgs||[]).map(m=>({
       role:m.role,
@@ -3031,14 +2892,8 @@ _restoreLastConv();
 renderSB(); renderMsgs();
 updateTokenBar();
 updateModelBtn();
-// Show API key setup if not configured
-if(!CFG.apiKey){
-  document.getElementById('setup-ov').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('setup-key').focus(),100);
-}else{
-  document.getElementById('setup-ov').classList.add('hidden');
-  document.getElementById('input').focus();
-}
+// Sign-in gate shown until onAuthStateChanged confirms fbUser (keys are hidden server-side)
+document.getElementById('setup-ov').classList.remove('hidden');
 
 // ── Currency note for system prompt ──
 function getCurrencyNote(){
@@ -3105,7 +2960,7 @@ function updateHdrSub(){
   const conv=curConv();
   const msgCount=(conv?.msgs||[]).length;
   const pinnedCount=(conv?.msgs||[]).filter(m=>m.bookmarked||(m.snippets?.length>0)).length;
-  const sub=conv?`${msgCount} msg${msgCount!==1?'s':''}${pinnedCount?' · '+pinnedCount+' pinned':''} · ${CFG.model||'mimo-v2.5'}`:CFG.model||'mimo-v2.5';
+  const sub=conv?`${msgCount} msg${msgCount!==1?'s':''}${pinnedCount?' · '+pinnedCount+' pinned':''} · ${CFG.model||'deepseek-v4-flash'}`:CFG.model||'deepseek-v4-flash';
   const subEl=document.getElementById('hdr-sub');if(subEl)subEl.textContent=sub;
   const avEl=document.getElementById('hdr-av');
   if(avEl&&conv){
@@ -3404,11 +3259,8 @@ async function sendDiaryEntryMain(){
     return{role:'user',content:parts.length===1&&parts[0].type==='text'?m.text:parts};
   });
   try{
-    const res=await fetch(API_URL,{method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':CFG.apiKey,'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'mimo-v2-omni',max_tokens:512,system:sysPrompt,messages:apiMsgs})});
-    const data=await res.json();
-    const replyText=data.content?.[0]?.text||'Sorry, I had trouble with that. Please try again.';
+    const result=await callMimo({messages:apiMsgs,model:'mimo-v2.5',systemPrompt:sysPrompt,useOAI:false,maxTokens:512});
+    const replyText=result.text||'Sorry, I had trouble with that. Please try again.';
     document.getElementById('dm-typing-main')?.remove();
     const asstMsg={role:'assistant',text:replyText,ts:Date.now()};
     db.diaryChats[key].push(asstMsg);save();
@@ -3502,11 +3354,8 @@ async function sendDiaryMsg(){
     return{role:'user',content:parts.length===1&&parts[0].type==='text'?m.text:parts};
   });
   try{
-    const res=await fetch(API_URL,{method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':CFG.apiKey,'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'mimo-v2-omni',max_tokens:512,system:sysPrompt,messages:apiMsgs})});
-    const data=await res.json();
-    const replyText=data.content?.[0]?.text||'Sorry, I had trouble with that. Please try again.';
+    const result=await callMimo({messages:apiMsgs,model:'mimo-v2.5',systemPrompt:sysPrompt,useOAI:false,maxTokens:512});
+    const replyText=result.text||'Sorry, I had trouble with that. Please try again.';
     document.getElementById('dm-typing')?.remove();
     const asstMsg={role:'assistant',text:replyText,ts:Date.now()};
     db.diaryChats[cat].push(asstMsg);save();
@@ -3797,87 +3646,7 @@ async function regenMsg(msgIdx){
   if(!conv||streaming||msgIdx<0||conv.msgs[msgIdx]?.role!=='assistant')return;
   conv.msgs=conv.msgs.slice(0,msgIdx);save();renderMsgs();
   if(!conv.msgs.length||conv.msgs[conv.msgs.length-1].role!=='user')return;
-  const snippetsCtx=buildSnippetsContext(conv.msgs);
-  const asstEl=appendDOM({role:'assistant',text:'',ts:Date.now()},true,-1);
-  document.getElementById('send-btn').style.display='none';
-  document.getElementById('stop-btn').style.display='flex';
-  streaming=true;abortCtrl=new AbortController();
-  const activeModel=pickModel(conv.msgs);
-  let acc='',attempt=0,lastErr='',reqTokens=0,reqInputTok=0,reqOutputTok=0;
-  const hasAudio=conv.msgs.some(m=>(m.audioInputs||[]).length>0);
-  const _tStart2=Date.now();
-  const _tIv2=setInterval(()=>{
-    const s=Math.floor((Date.now()-_tStart2)/1000);
-    if(!acc)asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">↺ ${activeModel} · ${s}s</em><span class="cursor"></span>`;
-  },1000);
-  const tryRegen=async()=>{
-    attempt++;acc='';reqTokens=0;reqInputTok=0;reqOutputTok=0;
-    const sp=((CFG.systemPrompt||'')+snippetsCtx+getCurrentTimestamp()+getCurrencyNote()+getImageInstruction()).trim();
-    if(attempt>1){asstEl.innerHTML=`<em style="color:var(--tx3);font-size:11px">Retrying… (${attempt}/3)</em><span class="cursor"></span>`;}
-    wsAnnotations=[];
-    const useOAI=hasAudio;
-    let url,hdrs,body;
-    if(useOAI){
-      url=OAI_URL;
-      hdrs={'Content-Type':'application/json','Authorization':'Bearer '+CFG.apiKey};
-      body={model:activeModel,max_tokens:8192,stream:false,messages:buildOAI(conv.msgs,sp)};
-    }else{
-      url=API_URL;hdrs={'Content-Type':'application/json','x-api-key':CFG.apiKey,'anthropic-version':'2023-06-01'};
-      body={model:activeModel,max_tokens:8192,stream:false,messages:buildAPI(conv.msgs)};
-      if(sp)body.system=sp;
-    }
-    const res=await fetch(url,{method:'POST',headers:hdrs,body:JSON.stringify(body),signal:abortCtrl.signal});
-    if(!res.ok){const eText=await res.text();lastErr=`API Error ${res.status}: ${eText}`;throw new Error(lastErr);}
-    const data=await res.json();
-    if(useOAI){
-      acc=data.choices?.[0]?.message?.content||'';
-      reqInputTok=data.usage?.prompt_tokens||0;
-      reqOutputTok=data.usage?.completion_tokens||0;
-    }else{
-      acc=(data.content?.find(b=>b.type==='text')?.text)||data.content?.[0]?.text||'';
-      reqInputTok=data.usage?.input_tokens||0;
-      reqOutputTok=data.usage?.output_tokens||0;
-    }
-    reqTokens=reqInputTok+reqOutputTok;
-    if(!acc){lastErr='Empty response';throw new Error(lastErr);}
-  };
-  try{
-    let ok=false;
-    while(attempt<3&&!ok){try{await tryRegen();ok=true;}catch(e){if(e.name==='AbortError')throw e;if(attempt>=3)throw e;await new Promise(r=>setTimeout(r,1000*attempt));}}
-    if(reqTokens>0){db.totalTokens=(db.totalTokens||0)+reqTokens;save();updateTokenBar();}
-    const reqCredits=reqTokens>0?calcCredits(reqInputTok,reqOutputTok,activeModel):0;
-    renderMD(asstEl,acc);
-    if(wsAnnotations.length){const srcEl=document.createElement('div');srcEl.className='ws-sources';srcEl.innerHTML=renderAnnotations(wsAnnotations);asstEl.appendChild(srcEl);}
-    const asstMsg={role:'assistant',text:acc,ts:Date.now(),tokens:reqTokens||undefined,credits:reqCredits||undefined,annotations:wsAnnotations.length?[...wsAnnotations]:undefined};
-    conv.msgs.push(asstMsg);save();updateHdrSub();
-    const newIdx=conv.msgs.length-1;
-    const wrap=asstEl.closest('.msg-group');
-    if(wrap){
-      wrap.dataset.idx=newIdx;wrapBlocks(asstEl,newIdx,[]);
-      let bar=wrap.querySelector('.msg-action-bar');
-      if(!bar){bar=document.createElement('div');bar.className='msg-action-bar';wrap.appendChild(bar);}
-      const tokStr4=reqTokens?reqTokens+' tok'+(reqCredits?' · ~'+fmtCredits(reqCredits):''):'';
-      bar.innerHTML=`<span class="mab-time">${fmtTime(Date.now())}</span>
-        ${tokStr4?`<span class="mab-sep">·</span><span class="mab-tokens">${tokStr4}</span>`:''}
-        <span class="mab-sep">·</span>
-        <button class="mab-btn" id="mab-pin-${newIdx}" onclick="toggleBookmark(${newIdx},event)" title="Pin">★ pin</button>
-        <span class="mab-sep">·</span>
-        <button class="mab-btn" onclick="copyMsgText(this,${newIdx})" title="Copy">📋 copy</button>
-        <span class="mab-sep">·</span>
-        <button class="mab-btn" onclick="regenMsg(${newIdx})" title="Regenerate">↺ regen</button>
-        <span class="mab-sep">·</span>
-        <button class="mab-btn" id="tts-btn-${newIdx}" onclick="playTTS(${newIdx},this)" title="Listen">🔊 listen</button>`;
-      setTimeout(()=>_prefetchMsgTTS(acc),500);
-    }
-  }catch(e){
-    if(e.name==='AbortError'){if(acc){conv.msgs.push({role:'assistant',text:acc,ts:Date.now()});save();}else{asstEl.innerHTML='<em style="color:var(--tx3)">Stopped.</em>';}}
-    else{asstEl.innerHTML=`<span style="color:var(--red)">⚠️ ${esc(lastErr||e.message)}</span>`;}
-  }finally{
-    clearInterval(_tIv2);
-    streaming=false;abortCtrl=null;
-    document.getElementById('send-btn').style.display='flex';
-    document.getElementById('stop-btn').style.display='none';
-  }
+  await sendBackground(conv);
 }
 
 // ══ POLICY PDF ══
@@ -4256,6 +4025,7 @@ fbAuth.onAuthStateChanged(async user => {
   fbUser = user;
   renderSyncUI();
   if (user) {
+    document.getElementById('setup-ov').classList.add('hidden');
     // Capture guest data before cloud pull
     const guestDb = {
       convs:       (db.convs||[]).filter(c=>c.id),
@@ -4288,7 +4058,9 @@ fbAuth.onAuthStateChanged(async user => {
     _restoreLastConv();
     renderSB(); renderMsgs();
     updateTokenBar();
+    document.getElementById('input').focus();
   } else {
+    document.getElementById('setup-ov').classList.remove('hidden');
     stopRealtimeSync();
     if (_explicitSignOut) {
       _explicitSignOut = false;
